@@ -6,6 +6,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\Note;
 use App\Models\User;
+use App\Services\NoteService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
@@ -82,6 +83,23 @@ class NoteApiTest extends TestCase
             ->assertJsonPath('errors.content.0', 'Treść notatki jest wymagana.');
     }
 
+    #[Test]
+    public function blokuje_utworzenie_notatki_po_przekroczeniu_limitu(): void
+    {
+        $user = User::factory()->create();
+        Note::factory()->count(NoteService::MAX_NOTES_PER_USER)->for($user)->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/notes', [
+            'title' => 'Notatka ponad limit',
+            'content' => 'Treść.',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('message', 'Osiągnięto limit 100 notatek. Usuń część notatek, aby dodać nową.');
+
+        $this->assertSame(NoteService::MAX_NOTES_PER_USER, $user->notes()->count());
+    }
 
     // -------------------------------------------------------------------- lista
 
@@ -150,6 +168,18 @@ class NoteApiTest extends TestCase
         );
     }
 
+    #[Test]
+    public function ogranicza_rozmiar_strony_do_bezpiecznego_maksimum(): void
+    {
+        $user = User::factory()->create();
+        Note::factory()->count(60)->for($user)->create();
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/notes?per_page=1000')
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', NoteService::MAX_PER_PAGE)
+            ->assertJsonCount(NoteService::MAX_PER_PAGE, 'data');
+    }
 
     // ------------------------------------------------------- pojedynczy zasób
 
