@@ -25,7 +25,3 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
-
-# Baza SQLite generowana lokalnie (php artisan migrate --seed) - nie trzymamy jej w repo.
-/database/*.sqlite
-/database/*.sqlite-journal
