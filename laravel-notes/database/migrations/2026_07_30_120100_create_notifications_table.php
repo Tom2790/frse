@@ -7,9 +7,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Własna tabela powiadomień (Zadanie 5a) — świadomie NIE korzystamy z tabeli
- * notyfikacji Laravela (UUID + kolumna `data` w JSON), bo specyfikacja wymaga
- * jawnych kolumn `type`, `title`, `body`, `read_at`.
+ * Wlasna tabela, a nie tabela notyfikacji Laravela (UUID + kolumna data w JSON),
+ * bo zadanie wymaga jawnych kolumn type, title, body, read_at.
  */
 return new class extends Migration
 {
@@ -24,8 +23,8 @@ return new class extends Migration
             $table->timestamp('read_at')->nullable();
             $table->timestamp('created_at')->nullable();
 
-            // Dzwonek pyta o „20 najnowszych" i o licznik nieprzeczytanych — oba
-            // zapytania idą po user_id, dlatego indeks złożony z datą i read_at.
+            // Dzwonek pyta o 20 najnowszych i o licznik nieprzeczytanych. Oba
+            // zapytania ida po user_id, stad dwa indeksy zlozone.
             $table->index(['user_id', 'created_at']);
             $table->index(['user_id', 'read_at']);
         });

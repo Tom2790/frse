@@ -11,21 +11,15 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Date;
 
 /**
- * Logika powiadomień w aplikacji (Zadanie 5a).
- *
- * Dla notatek zbudowaliśmy pełne repozytorium (wymóg Zadania 2). Tutaj model dostępu
- * jest trywialny (jedna tabela, trzy zapytania), więc serwis rozmawia z Eloquentem
- * bezpośrednio — dodanie kolejnego interfejsu byłoby warstwą bez treści. Zasada
- * pozostaje ta sama: kontroler nie dotyka modeli.
+ * Bez wlasnego repozytorium: jedna tabela i trzy zapytania, wiec kolejny interfejs
+ * bylby warstwa bez tresci. Zasada zostaje ta sama - kontroler nie dotyka modeli.
  */
 final class NotificationService
 {
-    /** Ile powiadomień pokazuje dzwonek. */
+    /** Ile powiadomien pokazuje dzwonek. */
     public const int FEED_LIMIT = 20;
 
     /**
-     * Najnowsze powiadomienia użytkownika.
-     *
      * @return Collection<int, Notification>
      */
     public function latestFor(User $user, int $limit = self::FEED_LIMIT): Collection
@@ -46,11 +40,10 @@ final class NotificationService
     }
 
     /**
-     * Oznacza jedno powiadomienie jako przeczytane. Operacja jest idempotentna —
-     * front wysyła ją optymistycznie i powtórne kliknięcie nie może nadpisać
-     * pierwotnej daty przeczytania.
+     * Idempotentne: front wysyla to optymistycznie, a powtorne klikniecie nie moze
+     * nadpisac pierwotnej daty przeczytania.
      *
-     * @throws ModelNotFoundException Gdy powiadomienie nie należy do użytkownika.
+     * @throws ModelNotFoundException
      */
     public function markAsRead(int $id, User $user): Notification
     {
@@ -71,9 +64,7 @@ final class NotificationService
         return $notification;
     }
 
-    /**
-     * @return int Liczba powiadomień, które faktycznie zmieniły stan.
-     */
+    /** @return int Ile powiadomien faktycznie zmienilo stan. */
     public function markAllAsRead(User $user): int
     {
         return Notification::query()

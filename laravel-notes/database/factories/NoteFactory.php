@@ -29,20 +29,11 @@ class NoteFactory extends Factory
         ];
     }
 
-    /**
-     * Notatka przypięta.
-     */
     public function pinned(): static
     {
         return $this->state(['is_pinned' => true]);
     }
 
-    /**
-     * Notatka nieprzypięta.
-     *
-     * Właściciela wskazujemy wbudowanym `Note::factory()->for($user)` — relacja
-     * `user()` na modelu wystarcza, żeby fabryka rozpoznała powiązanie.
-     */
     public function unpinned(): static
     {
         return $this->state(['is_pinned' => false]);

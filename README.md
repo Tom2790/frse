@@ -1,76 +1,47 @@
-# Zadania rekrutacyjne — Full Stack Developer (Laravel / PHP / JS / Vue)
+# Zadania rekrutacyjne - Full Stack Developer (Laravel / PHP / JS / Vue)
 
-Rozwiązania wszystkich 5 zadań (1–4 obowiązkowe, 5a i 5b opcjonalne).
-
-```
-laravel-notes/          Zadania 1, 2, 4, 5a, 5b — aplikacja Laravel 13 + Vue 3
-zadanie-3-task-queue/   Zadanie 3 — czysty JavaScript, bez zależności
-```
-
-Zadanie 3 jest osobnym pakietem, bo nie ma nic wspólnego z Laravelem. Pozostałe zadania
-świadomie mieszkają w jednej aplikacji: Zadanie 2 refaktoryzuje kod z Zadania 1,
-a Zadania 4 i 5 konsumują to samo API.
-
-Każde zadanie to osobny commit i każdy z nich jest samodzielnie zielony — jego testy
-przechodzą na stanie repozytorium z tego właśnie commita, bez kodu z zadań późniejszych:
+Rozwiązania wszystkich 5 zadań. Zadania 5a i 5b były opcjonalne, ale zrobiłem oba.
 
 ```
-docs: README z mapa zadan, instrukcja uruchomienia i decyzjami projektowymi
-feat(zadanie-5b): e-mail o nowej notatce przez kolejke              49 testów
-feat(zadanie-5a): powiadomienia w aplikacji + dzwonek Vue           42 testy
-feat(zadanie-4):  widget Vue do zarzadzania notatkami w widoku Blade
-refactor(zadanie-2): warstwa repozytorium i serwisu                 35 testów
-feat(zadanie-1):  REST API notatek z uwierzytelnianiem Sanctum       24 testy
-feat(zadanie-3):  kolejka asynchroniczna z priorytetami w czystym JS 10 testów
-chore: szkielet Laravel 13 z Sanctum
+laravel-notes/          zadania 1, 2, 4, 5a, 5b - Laravel 13 + Vue 3 + Bootstrap 5
+zadanie-3-task-queue/   zadanie 3 - czysty JS, bez zależności
 ```
 
-Warto zajrzeć w diff commita Zadania 2 — pokazuje dokładnie tę refaktoryzację, o którą
-prosi treść zadania: w commicie Zadania 1 `NoteController` rozmawia z Eloquentem
-bezpośrednio, a Zadanie 2 przenosi to do repozytorium i serwisu.
+Zadanie 3 jest osobnym pakietem, bo nie ma nic wspólnego z Laravelem. Reszta siedzi
+w jednej aplikacji, bo zadanie 2 refaktoryzuje kod z zadania 1, a zadania 4 i 5 gadają
+z tym samym API.
 
-## Mapa zadań → kod
-
-| Zadanie | Najważniejsze pliki | Dokumentacja |
-| --- | --- | --- |
-| **1** REST API + Sanctum | `app/Http/Controllers/Api/{Auth,Note}Controller.php`, `app/Http/Requests/`, `app/Http/Resources/`, `app/Policies/NotePolicy.php`, `database/migrations/*_create_notes_table.php` | ten plik, sekcja „Zadanie 1” |
-| **2** Repository + Service | `app/Repositories/Contracts/NoteRepositoryInterface.php`, `app/Repositories/EloquentNoteRepository.php`, `app/Services/NoteService.php`, `app/Providers/AppServiceProvider.php` | [`docs/zadanie-2-refaktoryzacja.md`](laravel-notes/docs/zadanie-2-refaktoryzacja.md) |
-| **3** Kolejka async w JS | `zadanie-3-task-queue/src/TaskQueue.js` | [`zadanie-3-task-queue/README.md`](zadanie-3-task-queue/README.md) |
-| **4** Widget Vue w Bladzie | `resources/js/components/{NoteManager,NoteForm}.vue`, `resources/js/app.js`, `resources/views/notes.blade.php` | ten plik, sekcja „Zadanie 4” |
-| **5a** Dzwonek powiadomień | `resources/js/components/NotificationBell.vue`, `app/Http/Controllers/Api/NotificationController.php`, `app/Services/NotificationService.php` | ten plik, sekcja „Zadanie 5a” |
-| **5b** E-mail przez kolejkę | `app/Events/NoteCreated.php`, `app/Listeners/SendNoteCreatedEmail.php`, `app/Mail/NoteCreatedMail.php` | [`docs/zadanie-5b-dlaczego-shouldqueue.md`](laravel-notes/docs/zadanie-5b-dlaczego-shouldqueue.md) |
+Każde zadanie to osobny commit. Warto zajrzeć w diff commita zadania 2 - w commicie
+zadania 1 `NoteController` używa Eloquenta bezpośrednio, a zadanie 2 przenosi to do
+repozytorium i serwisu. Każdy commit jest zielony na własnym stanie repo, bez kodu
+z zadań późniejszych.
 
 ## Uruchomienie
 
-Wymagania: **PHP 8.4**, Composer 2, **Node 18+**. Baza to SQLite — nie trzeba MySQL-a.
+Potrzebne: PHP 8.4, Composer 2, Node 18+. Baza to SQLite, nie trzeba MySQL-a.
 
 ```bash
-# --- Zadania 1, 2, 4, 5a, 5b ---------------------------------------------
 cd laravel-notes
 composer install
 cp .env.example .env
 php artisan key:generate
 touch database/database.sqlite
-php artisan migrate --seed          # 2 konta, 30 notatek, 9 powiadomień
+php artisan migrate --seed
 npm install
-npm run build                       # albo `npm run dev` przy pracy nad frontem
-php artisan serve                   # http://127.0.0.1:8000
-
-# w drugim terminalu — Zadanie 5b
-php artisan queue:work
+npm run build              # albo npm run dev przy pracy nad frontem
+php artisan serve          # http://127.0.0.1:8000
+php artisan queue:work     # drugi terminal, potrzebne do zadania 5b
 ```
 
-Logowanie: `demo@example.com` / `password` (pola są wstępnie wypełnione).
-Drugie konto `obcy@example.com` służy do sprawdzenia izolacji danych — po zalogowaniu
-na nie widać zupełnie inne notatki.
+Logowanie: `demo@example.com` / `password` (pola są wstępnie wypełnione). Drugie konto
+`obcy@example.com` służy do sprawdzenia izolacji danych - po zalogowaniu widać zupełnie
+inne notatki.
 
-> **Uwaga o porcie.** Widget Vue korzysta z sesyjnego trybu Sanctuma, który akceptuje
-> tylko domeny z `SANCTUM_STATEFUL_DOMAINS` (w `.env` ustawione na localhost i 127.0.0.1,
-> port 8000). Przy `php artisan serve --port=INNY` trzeba dopisać ten port, inaczej
-> każde żądanie z widgetu skończy się kodem 401.
+Jeśli uruchamiasz serwer na innym porcie niż 8000, dopisz go do `SANCTUM_STATEFUL_DOMAINS`
+w `.env`. Widget chodzi na sesyjnym trybie Sanctuma, który sprawdza domenę, więc bez tego
+każde żądanie z widgetu skończy się kodem 401.
 
 ```bash
-# --- Zadanie 3 -----------------------------------------------------------
 cd zadanie-3-task-queue
 npm test          # 10 testów
 npm run examples  # 3 przykłady użycia
@@ -80,44 +51,38 @@ npm run examples  # 3 przykłady użycia
 
 ```bash
 cd laravel-notes && php artisan test
+# Tests: 55 passed (211 assertions)
 ```
 
-```
-Tests:    49 passed (188 assertions)
-```
-
-| Plik | Zakres |
+| Plik | Co pokrywa |
 | --- | --- |
-| `tests/Feature/Api/NoteApiTest.php` | pełny CRUD, izolacja danych, walidacja 422, paginacja, limit notatek, 401 bez logowania |
-| `tests/Feature/Api/AuthTest.php` | rejestracja, logowanie, token Sanctum, brak enumeracji kont, wylogowanie |
-| `tests/Feature/Api/NotificationApiTest.php` | lista, licznik nieprzeczytanych, oznaczanie (idempotentne), izolacja |
-| `tests/Feature/NoteCreatedNotificationTest.php` | zdarzenie → kolejkowany listener → Mailable (Zadanie 5b) |
-| `tests/Unit/NoteServiceTest.php` | reguły biznesowe bez bazy, na atrapie repozytorium (Zadanie 2) |
+| `tests/Feature/Api/NoteApiTest.php` | CRUD, izolacja danych, walidacja 422, paginacja, limit notatek, 401 bez logowania |
+| `tests/Feature/Api/AuthTest.php` | rejestracja, logowanie, token, brak enumeracji kont, wylogowanie |
+| `tests/Feature/Api/NotificationApiTest.php` | lista, licznik nieprzeczytanych, oznaczanie, izolacja |
+| `tests/Feature/NoteCreatedNotificationTest.php` | zdarzenie, kolejkowany listener, Mailable |
+| `tests/Feature/NotesPageTest.php` | strona z widgetem, logowanie sesyjne, dostęp do API po sesji |
+| `tests/Unit/NoteServiceTest.php` | reguły biznesowe bez bazy, na atrapie repozytorium |
 | `tests/Unit/NotePolicyTest.php` | polityka bezpośrednio i przez `Gate` |
 
-Trzy testy wymagane treścią Zadania 1 to `tworzy_notatke_dla_zalogowanego_uzytkownika`,
-`zwraca_liste_wlasnych_notatek_z_paginacja_po_15` oraz
+Trzy testy wymagane w zadaniu 1 to `tworzy_notatke_dla_zalogowanego_uzytkownika`,
+`zwraca_liste_wlasnych_notatek_z_paginacja_po_15` i
 `proba_dostepu_do_cudzej_notatki_konczy_sie_404`.
 
----
+## Zadanie 1 - API
 
-## Zadanie 1 — REST API z uwierzytelnianiem
-
-### Endpointy
-
-| Metoda | Ścieżka | Opis |
+| Metoda | Ścieżka | |
 | --- | --- | --- |
-| `POST` | `/api/register` | rejestracja, zwraca token (limit 6 żądań/min) |
-| `POST` | `/api/login` | logowanie, zwraca token (limit 6 żądań/min) |
+| `POST` | `/api/register` | zwraca token, limit 6 żądań/min |
+| `POST` | `/api/login` | zwraca token, limit 6 żądań/min |
 | `POST` | `/api/logout` | unieważnia token użyty w żądaniu |
-| `GET` | `/api/user` | dane zalogowanego użytkownika |
-| `GET` | `/api/notes` | lista, paginacja 15/stronę (`?page=`, `?per_page=` max 50) |
-| `POST` | `/api/notes` | nowa notatka → `201` + nagłówek `Location` |
-| `GET` | `/api/notes/{id}` | pojedyncza notatka |
-| `PUT`/`PATCH` | `/api/notes/{id}` | aktualizacja, także częściowa |
-| `DELETE` | `/api/notes/{id}` | usunięcie → `204` |
+| `GET` | `/api/user` | dane zalogowanego |
+| `GET` | `/api/notes` | 15 na stronę, `?page=`, `?per_page=` (max 50) |
+| `POST` | `/api/notes` | 201 + nagłówek `Location` |
+| `GET` | `/api/notes/{id}` | |
+| `PUT`/`PATCH` | `/api/notes/{id}` | także aktualizacja częściowa |
+| `DELETE` | `/api/notes/{id}` | 204 |
 
-### Kształt odpowiedzi
+Odpowiedź listy:
 
 ```json
 {
@@ -129,120 +94,92 @@ Trzy testy wymagane treścią Zadania 1 to `tworzy_notatke_dla_zalogowanego_uzyt
 }
 ```
 
-`pinned_total` to **globalny** licznik przypiętych notatek użytkownika, nie tylko
-z bieżącej strony — bez niego liczniki w nagłówku widgetu (Zadanie 4) byłyby błędne
-przy więcej niż jednej stronie wyników.
+`pinned_total` to globalny licznik przypiętych notatek użytkownika, nie tylko z bieżącej
+strony. Bez tego liczniki w nagłówku widgetu byłyby błędne, gdy wyników jest więcej niż 15.
 
-### Kody odpowiedzi
+Kody: `422` walidacja albo reguła biznesowa, `401` brak sesji/tokenu, `404` notatka nie
+istnieje **albo należy do kogoś innego**, `419` brak nagłówka CSRF w trybie sesyjnym.
 
-| Kod | Kiedy |
-| --- | --- |
-| `422` | błąd walidacji (`errors` z komunikatami per pole) lub reguły biznesowej (tylko `message`) |
-| `401` | brak lub nieważny token / sesja |
-| `404` | notatka nie istnieje **albo należy do kogoś innego** |
-| `419` | brak nagłówka CSRF w trybie sesyjnym |
+**Cudza notatka daje 404, nie 403.** Repozytorium zawęża każde zapytanie do właściciela,
+więc obcy zasób po prostu nie istnieje z punktu widzenia żądania. Nie potwierdzamy nawet
+tego, że notatka o danym ID gdzieś jest. `NotePolicy` (`viewAny`, `view`, `create`,
+`update`, `delete`) działa jako druga warstwa, na już wczytanym modelu, i ma osobne testy.
 
-**Dlaczego cudza notatka daje 404, nie 403.** Repozytorium zawęża każde zapytanie do
-właściciela, więc obcy zasób po prostu nie istnieje z perspektywy żądania. To
-mocniejsze niż 403: nie potwierdzamy nawet istnienia notatki o danym ID. `NotePolicy`
-(`viewAny`, `view`, `create`, `update`, `delete`) działa jako druga warstwa, na już
-wczytanym modelu, i jest przetestowana osobno.
+`user_id` nigdy nie pochodzi z ciała żądania - ustawia go serwis na podstawie
+zalogowanego użytkownika. Jest na to test.
 
-### Ustalanie właściciela
+Sanctum działa tu w dwóch trybach i oba prowadzą do tych samych endpointów: token osobisty
+dla klientów API (i testów) oraz sesja cookie dla widgetu na tym samym origin
+(`statefulApi()` w `bootstrap/app.php`). W drugim trybie token nie leży w localStorage,
+ciasteczko jest `HttpOnly`, a zapisy chroni CSRF.
 
-`user_id` nigdy nie pochodzi z ciała żądania — ustawia go serwis na podstawie
-uwierzytelnionego użytkownika. Jest na to test
-(`tworzenie_ignoruje_probe_podstawienia_wlasciciela`): wysłanie `user_id` obcego
-użytkownika w POST nie ma żadnego efektu.
+## Zadanie 4 - widget Vue w Bladzie
 
-### Dwa tryby uwierzytelniania
-
-Sanctum obsługuje oba i oba prowadzą do tych samych endpointów `/api/*`:
-
-- **token osobisty** — dla klientów API (`Authorization: Bearer …`), używany w testach;
-- **sesja cookie** — dla widgetu Vue na tym samym origin (`statefulApi()` w
-  `bootstrap/app.php`). Token nie leży w `localStorage`, ciasteczko jest `HttpOnly`,
-  a operacje zapisujące są chronione CSRF.
-
----
-
-## Zadanie 4 — widget Vue w widoku Blade
-
-Aplikacja **nie jest SPA**. Laravel renderuje widoki, Vue montuje się w `#app`
-i przejmuje tylko widget. Routing, sesja i uprawnienia zostają po stronie Laravela.
+To nie jest SPA. Laravel renderuje widoki, Vue montuje się w `#app` i przejmuje sam widget.
 
 ```
-resources/js/app.js                    rejestracja komponentów + konfiguracja axios
+resources/js/app.js                     rejestracja komponentów, konfiguracja axios
 resources/js/components/NoteManager.vue lista, liczniki, filtrowanie, polling, paginacja
-resources/js/components/NoteForm.vue    formularz tworzenia i edycji, obsługa 422
+resources/js/components/NoteForm.vue    formularz, obsługa 422
 resources/views/notes.blade.php         <note-manager></note-manager>
 resources/views/layouts/app.blade.php   #app, navbar z dzwonkiem
 ```
 
-Zrealizowane wymagania: lista pobierana w `mounted()`, odświeżanie co 3 minuty
-(`setInterval`, czyszczone w `beforeUnmount`), filtrowanie po tytule przez `computed`
-(bez dodatkowego zapytania), optymistyczny toggle `is_pinned` z rollbackiem w `.catch()`,
-skeleton loader, dwa różne stany puste („brak notatek” vs „filtr nic nie znalazł”),
-usuwanie przez `confirm()`, liczniki w nagłówku karty, `watch` na propie `note`
-w `NoteForm`, komunikacja props w dół / `emit` w górę (`saved`, `cancel`).
+Dwie rzeczy warte odnotowania:
 
-### Dwie rzeczy, które warto znać
+**Alias `vue` na build z kompilatorem szablonów** (`vite.config.js`). Domyślny import
+`vue` w bundlerze to wersja runtime-only, która nie umie skompilować szablonu wziętego
+z DOM. Skoro komponent osadzamy znacznikiem `<note-manager>` w Bladzie, ten kompilator
+jest potrzebny. Bez aliasu `#app` renderuje się jako pusty `<!---->` i widget się nie
+pojawia - bez żadnego błędu w konsoli.
 
-**`resolve.alias` na build Vue z kompilatorem.** Domyślny import `vue` w bundlerze to
-wersja runtime-only, która nie umie skompilować szablonu wziętego z DOM. Ponieważ
-komponent osadzamy znacznikiem `<note-manager></note-manager>` wprost w Bladzie, Vue musi
-ten HTML skompilować w przeglądarce. Bez aliasu w `vite.config.js` `#app` renderuje się
-jako pusty `<!---->` i widget **w ogóle się nie pojawia** — bez żadnego błędu w konsoli.
-
-**`withXSRFToken` to osobna flaga.** W axios 1.x samo `withCredentials = true` nie
-wystarcza; bez `withXSRFToken = true` każdy `POST/PUT/PATCH/DELETE` z widgetu kończy się
-kodem 419.
-
-### Paginacja w widgecie
+**`withXSRFToken` to w axios 1.x osobna flaga.** Samo `withCredentials` nie wystarcza,
+bez niej każdy `POST/PUT/PATCH/DELETE` z widgetu dostaje 419.
 
 API zwraca 15 notatek na stronę, więc widget ma sterowanie stronami (szkielet z zadania
-go nie przewidywał, ale bez tego 9 z 24 notatek byłoby niedostępnych). Filtrowanie
-działa — zgodnie z wymaganiem — na już pobranej stronie, bez dodatkowego zapytania;
-stan pusty wprost o tym informuje („Żadna notatka **na tej stronie**…”).
+tego nie przewidywał, ale bez tego 9 z 24 notatek byłoby nie do zobaczenia). Filtrowanie
+działa - zgodnie z wymaganiem - na już pobranej stronie, przez `computed`; stan pusty
+mówi o tym wprost.
 
----
+## Zadanie 5a - powiadomienia
 
-## Zadanie 5a — dzwonek powiadomień
-
-| Metoda | Ścieżka | Opis |
+| Metoda | Ścieżka | |
 | --- | --- | --- |
-| `GET` | `/api/notifications` | 20 najnowszych + `meta.unread_count` (licznik globalny) |
-| `PATCH` | `/api/notifications/{id}/read` | oznacza jedno jako przeczytane (idempotentnie) |
-| `PATCH` | `/api/notifications/read-all` | oznacza wszystkie, zwraca liczbę zmienionych |
+| `GET` | `/api/notifications` | 20 najnowszych + `meta.unread_count` |
+| `PATCH` | `/api/notifications/{id}/read` | idempotentne |
+| `PATCH` | `/api/notifications/read-all` | zwraca liczbę zmienionych |
 
-Trasa `read-all` jest zdefiniowana **przed** trasą z parametrem — inaczej „read-all”
-zostałoby dopasowane jako `{notification}`.
+`read-all` jest zdefiniowane przed trasą z parametrem, inaczej „read-all" zostałoby
+dopasowane jako `{notification}`.
 
-Komponent: badge z liczbą nieprzeczytanych (`99+` powyżej 99), polling co 60 s,
-optymistyczne oznaczanie z rollbackiem, skeleton loader, stan pusty, zamykanie panelu
-kliknięciem poza nim, czas względny liczony ręcznie — z poprawną polską odmianą
-(`1 minutę` / `2 minuty` / `5 minut`), bo `Intl.RelativeTimeFormat` nie pokrywa formy
-„2–4”, a `day.js` byłby zależnością dla jednej funkcji.
+Badge liczy się z `meta.unread_count`, a nie z długości listy - lista ma maksymalnie
+20 pozycji, więc przy 25 nieprzeczytanych pokazywałaby 20. Optymistyczne oznaczanie
+koryguje licznik lokalnie, żeby badge reagował od razu.
 
-Model `Notification` nie korzysta z systemu notyfikacji Laravela — specyfikacja wymaga
+Czas względny liczę ręcznie, bo polskie formy liczby mnogiej są nieregularne
+(1 minutę / 2 minuty / 5 minut), a `Intl.RelativeTimeFormat` nie zna formy dla 2-4.
+`day.js` byłby zależnością dla jednej funkcji.
+
+Model `Notification` nie korzysta z systemu notyfikacji Laravela, bo zadanie wymaga
 jawnych kolumn `type`/`title`/`body`/`read_at`, a nie UUID i JSON-owego `data`. Dlatego
-`User` **nie** używa traitu `Notifiable`: jego relacja `notifications()` kolidowałaby
-z naszą. Wyjaśnienie jest w komentarzu w modelu.
+`User` nie używa traitu `Notifiable` - jego relacja `notifications()` gryzłaby się z naszą.
 
----
+## Decyzje i ograniczenia
 
-## Świadome decyzje i ograniczenia
-
-- **Bootstrap zamiast Tailwinda.** Szkielet Laravela 13 przychodzi z Tailwindem, ale
-  zadanie wymaga Bootstrapowego skeleton loadera i ikon `bi-bell` — więc Tailwind został
-  wymieniony na Bootstrap 5 + Bootstrap Icons.
-- **`Model::preventLazyLoading()` poza produkcją.** Zapytania N+1 są traktowane jako
-  błąd, a nie jako coś do znalezienia kiedyś na produkcji.
-- **Notatki nie mają soft delete.** `DELETE` usuwa trwale, bo tego wymaga specyfikacja.
-- **Limit notatek nie jest transakcyjny** — szczegóły i rozwiązanie w
+- Bootstrap zamiast Tailwinda ze szkieletu Laravela - zadanie wymaga bootstrapowego
+  skeleton loadera i ikon `bi-bell`.
+- `Model::preventLazyLoading()` poza produkcją, żeby N+1 wywalał błąd od razu.
+- Notatki nie mają soft delete, `DELETE` usuwa trwale.
+- Limit 100 notatek nie jest transakcyjny - szczegóły w
   [`docs/zadanie-2-refaktoryzacja.md`](laravel-notes/docs/zadanie-2-refaktoryzacja.md).
-- **Powiadomienia nie mają repozytorium.** Model dostępu jest trywialny (jedna tabela,
-  trzy zapytania), więc `NotificationService` rozmawia z Eloquentem bezpośrednio.
-  Dodanie interfejsu byłoby warstwą bez treści. Zasada „kontroler nie dotyka modeli”
-  jest zachowana.
-- **Brak weryfikacji e-maila i resetu hasła.** Poza zakresem zadań.
+- Powiadomienia nie mają repozytorium: jedna tabela i trzy zapytania, więc kolejny
+  interfejs byłby warstwą bez treści. Kontroler nadal nie dotyka modeli.
+- Nie ma weryfikacji e-maila ani resetu hasła - poza zakresem zadań.
+- Front nie ma testów jednostkowych (Vitest). Logika komponentów jest pokryta pośrednio
+  przez testy API, ale to najsłabszy punkt tego rozwiązania i wiem o tym.
+
+## Dokumentacja szczegółowa
+
+- [`docs/zadanie-2-refaktoryzacja.md`](laravel-notes/docs/zadanie-2-refaktoryzacja.md) - Repository + Service Layer, kod przed i po
+- [`docs/zadanie-5b-dlaczego-shouldqueue.md`](laravel-notes/docs/zadanie-5b-dlaczego-shouldqueue.md) - dlaczego listener jest kolejkowany
+- [`zadanie-3-task-queue/README.md`](zadanie-3-task-queue/README.md) - API i decyzje w kolejce zadań

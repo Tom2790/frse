@@ -8,14 +8,11 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
 /**
- * Aktualizacja notatki.
+ * Autoryzacji tu nie ma - wlasciciela sprawdza polityka w kontrolerze, na wczytanej
+ * notatce. Tutaj tylko poprawnosc danych.
  *
- * Autoryzacja NIE odbywa się tutaj — właściciela sprawdza polityka w kontrolerze,
- * już na wczytanej notatce (`Gate::authorize('update', $note)`). Request odpowiada
- * wyłącznie za poprawność danych.
- *
- * Pola są opcjonalne (`sometimes`), żeby dało się wysłać aktualizację częściową —
- * widget Vue przełącza samo `is_pinned`, bez odsyłania całej treści notatki.
+ * Pola sa opcjonalne (sometimes), zeby dzialala aktualizacja czesciowa: widget
+ * przelacza samo is_pinned i nie odsyla calej tresci notatki.
  */
 class UpdateNoteRequest extends FormRequest
 {
@@ -47,8 +44,8 @@ class UpdateNoteRequest extends FormRequest
     }
 
     /**
-     * Puste żądanie PUT/PATCH to najpewniej błąd klienta — odrzucamy je z 422
-     * zamiast cicho zwracać niezmieniony zasób.
+     * Puste PUT/PATCH to raczej blad klienta, wiec 422 zamiast cichego zwrocenia
+     * niezmienionej notatki.
      *
      * @return array<int, callable>
      */

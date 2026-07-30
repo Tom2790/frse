@@ -16,8 +16,7 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-            // Nazwa urządzenia trafia do etykiety tokenu Sanctum — pozwala
-            // użytkownikowi odwołać dostęp z konkretnego klienta.
+            // Trafia do etykiety tokenu, zeby dalo sie odwolac dostep z jednego klienta.
             'device_name' => ['sometimes', 'string', 'max:255'],
         ];
     }
@@ -34,9 +33,7 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /**
-     * Etykieta tokenu: nazwa urządzenia z żądania, a w razie jej braku — User-Agent.
-     */
+    /** Nazwa urzadzenia z zadania, a jak nie ma, to User-Agent. */
     public function deviceName(): string
     {
         $deviceName = trim((string) $this->input('device_name', ''));

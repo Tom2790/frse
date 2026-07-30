@@ -10,7 +10,7 @@
             ></button>
         </div>
 
-        <!-- Błąd niedotyczący pojedynczego pola (np. limit notatek, 500, brak sieci) -->
+        <!-- Blad niedotyczacy pojedynczego pola: limit notatek, 500, brak sieci -->
         <div v-if="generalError" class="alert alert-danger py-2">
             {{ generalError }}
         </div>
@@ -26,8 +26,8 @@
                 maxlength="255"
                 :disabled="isSaving"
             >
-            <!-- Komunikaty pochodzą z odpowiedzi 422 Laravela, nie z walidacji w JS —
-                 backend jest jedynym źródłem prawdy o poprawności danych. -->
+            <!-- Komunikaty pochodza z odpowiedzi 422, nie z walidacji w JS.
+                 Backend jest jedynym zrodlem prawdy o poprawnosci danych. -->
             <div v-if="errors.title" class="invalid-feedback">{{ errors.title[0] }}</div>
         </div>
 
@@ -70,24 +70,21 @@
 <script>
 import axios from 'axios';
 
-/** Pusty formularz — jedno źródło prawdy o stanie początkowym. */
+// Jedno miejsce definiujace stan poczatkowy formularza.
 const emptyForm = () => ({ title: '', content: '', is_pinned: false });
 
 export default {
     name: 'NoteForm',
 
     props: {
-        /**
-         * Notatka do edycji przekazana z rodzica (props w dół).
-         * `null` oznacza tryb tworzenia nowej notatki.
-         */
+        /** Notatka do edycji przekazana z rodzica. null = tryb tworzenia. */
         note: {
             type: Object,
             default: null,
         },
     },
 
-    // Zdarzenia w górę: rodzic decyduje, co zrobić po zapisie i anulowaniu.
+    // Rodzic decyduje, co zrobic po zapisie i anulowaniu.
     emits: ['saved', 'cancel'],
 
     data() {
@@ -107,11 +104,9 @@ export default {
 
     watch: {
         /**
-         * Rodzic trzyma NoteForm zamontowany i tylko podmienia prop `note`
-         * (edycja notatki A → edycja notatki B → nowa notatka). Bez tego watchera
-         * w polach zostałyby dane poprzedniej notatki.
-         *
-         * `immediate: true` obsługuje też pierwsze wyrenderowanie.
+         * Rodzic tylko podmienia propa note (edycja A, potem edycja B, potem nowa).
+         * Bez tego watchera w polach zostalyby dane poprzedniej notatki.
+         * immediate obsluguje tez pierwsze wyrenderowanie.
          */
         note: {
             immediate: true,
@@ -147,11 +142,9 @@ export default {
         },
 
         /**
-         * Obsługa odpowiedzi błędnych z Laravela:
-         *  - 422 z kluczem `errors` → komunikaty pod konkretnymi polami (walidacja),
-         *  - 422 bez `errors` → naruszenie reguły biznesowej (np. limit 100 notatek)
-         *    pokazywane jako komunikat ogólny,
-         *  - pozostałe (500, brak sieci) → komunikat ogólny z fallbackiem.
+         * 422 z kluczem errors to walidacja, wiec komunikaty ida pod pola.
+         * 422 bez errors to regula biznesowa (limit notatek) - komunikat ogolny.
+         * Reszta (500, brak sieci) tez jako komunikat ogolny.
          */
         handleError(error) {
             const response = error.response;

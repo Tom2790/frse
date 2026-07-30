@@ -9,24 +9,22 @@ use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
- * Kontrakt dostępu do notatek.
+ * Dostep do notatek.
  *
- * Każda metoda przyjmuje `User` — właściciel jest częścią kontraktu, nie opcją.
- * Dzięki temu izolacji danych nie da się „zapomnieć” na poziomie wywołania:
- * warstwa wyżej nie ma w ogóle metody, która zwróciłaby notatki wszystkich.
+ * Kazda metoda wymaga Usera, bo wlasciciel jest czescia kontraktu, a nie opcjonalnym
+ * filtrem. Nie ma tu metody zwracajacej notatki wszystkich, wiec o izolacji danych
+ * nie da sie zapomniec w miejscu wywolania.
  */
 interface NoteRepositoryInterface
 {
     /**
-     * Notatki użytkownika, stronicowane (przypięte najpierw).
+     * Stronicowane notatki uzytkownika, przypiete na gorze.
      *
      * @return LengthAwarePaginator<int, Note>
      */
     public function all(User $user, int $perPage = 15): LengthAwarePaginator;
 
-    /**
-     * Notatka użytkownika lub null, gdy nie istnieje albo należy do kogoś innego.
-     */
+    /** Notatka uzytkownika albo null, gdy nie istnieje lub nalezy do kogos innego. */
     public function find(int $id, User $user): ?Note;
 
     /**
@@ -36,23 +34,16 @@ interface NoteRepositoryInterface
 
     /**
      * @param  array<string, mixed>  $data
-     *
-     * @return Note|null Zaktualizowana notatka lub null, gdy nie należy do użytkownika.
+     * @return Note|null null, gdy notatka nie nalezy do uzytkownika
      */
     public function update(int $id, array $data, User $user): ?Note;
 
-    /**
-     * @return bool Czy notatka została usunięta (false = nie istnieje / nie należy do użytkownika).
-     */
+    /** @return bool false, gdy nie ma czego usunac */
     public function delete(int $id, User $user): bool;
 
-    /**
-     * Liczba wszystkich notatek użytkownika (potrzebna m.in. do limitu i liczników UI).
-     */
+    /** Potrzebne do limitu notatek i do licznikow w UI. */
     public function countForUser(User $user): int;
 
-    /**
-     * Liczba przypiętych notatek użytkownika — licznik globalny, nie tylko bieżąca strona.
-     */
+    /** Licznik globalny, nie tylko biezaca strona. */
     public function countPinnedForUser(User $user): int;
 }

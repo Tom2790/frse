@@ -15,15 +15,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * @property int         $id
- * @property int         $user_id
- * @property string      $title
- * @property string      $content
- * @property bool        $is_pinned
+ * @property int $id
+ * @property int $user_id
+ * @property string $title
+ * @property string $content
+ * @property bool $is_pinned
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
- * @property-read User   $user
+ * @property-read User $user
  */
+// user_id poza Fillable - wlasciciela ustawiamy relacja, nie z ciala zadania.
 #[Fillable(['title', 'content', 'is_pinned'])]
 #[UsePolicy(NotePolicy::class)]
 class Note extends Model
@@ -47,7 +48,7 @@ class Note extends Model
     }
 
     /**
-     * Zawęża zapytanie do notatek jednego właściciela — fundament izolacji danych.
+     * Zawezenie do jednego wlasciciela. Podstawa izolacji danych.
      *
      * @param  Builder<Note>  $query
      */
@@ -58,7 +59,7 @@ class Note extends Model
     }
 
     /**
-     * Domyślna kolejność listy: przypięte na górze, dalej od najnowszych.
+     * Domyslna kolejnosc listy: przypiete na gorze, dalej od najnowszych.
      *
      * @param  Builder<Note>  $query
      */

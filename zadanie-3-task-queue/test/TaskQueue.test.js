@@ -1,7 +1,4 @@
-/**
- * Testy TaskQueue — wbudowany runner Node (`node:test`), zero zależności.
- * Uruchomienie: npm test  (lub: node --test)
- */
+// Testy TaskQueue. Runner wbudowany w Node, zero zaleznosci: npm test
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -9,7 +6,7 @@ import TaskQueue from '../src/TaskQueue.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** Logger zbierający komunikaty — pozwala asertować logowanie bez brudzenia konsoli. */
+// Logger zbierajacy komunikaty, zeby sprawdzic logowanie bez brudzenia konsoli.
 const createSpyLogger = () => {
     const entries = [];
 
@@ -63,7 +60,7 @@ test('błąd zadania nie przerywa kolejki i jest logowany', async () => {
 
     const results = await queue.run(1);
 
-    assert.deepEqual(done, ['pierwsze', 'trzecie'], 'zadania po błędzie muszą się wykonać');
+    assert.deepEqual(done, ['pierwsze', 'trzecie'], 'zadania po bledzie musza sie wykonac');
     assert.deepEqual(queue.getStats(), { pending: 0, running: 0, completed: 2, failed: 1 });
     assert.equal(results.filter((result) => result.status === 'rejected').length, 1);
     assert.equal(logger.entries.length, 1);
@@ -94,7 +91,7 @@ test('getStats() odzwierciedla cykl życia i zwraca kopię', async () => {
     assert.deepEqual(queue.getStats(), { pending: 2, running: 0, completed: 0, failed: 0 });
 
     const snapshot = queue.getStats();
-    snapshot.pending = 999; // mutacja kopii nie może wpłynąć na kolejkę
+    snapshot.pending = 999; // mutacja kopii nie moze wplynac na kolejke
 
     assert.equal(queue.getStats().pending, 2);
 
@@ -159,8 +156,8 @@ test('powtórne run() w trakcie działania zwraca ten sam przebieg', async () =>
 
     const [firstResults, secondResults] = await Promise.all([first, second]);
 
-    assert.equal(executions, 1, 'zadanie nie może zostać uruchomione dwukrotnie');
-    assert.equal(firstResults, secondResults, 'oba wywołania dostają ten sam uchwyt');
+    assert.equal(executions, 1, 'zadanie nie moze zostac uruchomione dwukrotnie');
+    assert.equal(firstResults, secondResults, 'oba wywolania dostaja ten sam uchwyt');
 });
 
 test('waliduje argumenty', async () => {

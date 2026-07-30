@@ -1,97 +1,66 @@
-# Zadanie 3 — Kolejka asynchroniczna z priorytetami
+# Zadanie 3 - kolejka asynchroniczna z priorytetami
 
-Czysty JavaScript (ES2020+, moduły ESM), zero zależności produkcyjnych i testowych.
+Czysty JavaScript (ESM), bez zależności. Node 18+.
 
 ```
-src/TaskQueue.js                    # implementacja
-examples/01-priorytety.js           # priorytety + limit równoległości
-examples/02-obsluga-bledow.js       # błędy nie przerywają kolejki
-examples/03-dodawanie-w-trakcie.js  # dodawanie zadań podczas działania run()
-test/TaskQueue.test.js              # 10 testów (wbudowany runner node:test)
+src/TaskQueue.js                    implementacja
+examples/01-priorytety.js           priorytety + limit równoległości
+examples/02-obsluga-bledow.js       błędy nie przerywają kolejki
+examples/03-dodawanie-w-trakcie.js  dodawanie zadań podczas run()
+test/TaskQueue.test.js              10 testów (node:test)
 ```
 
 ## Uruchomienie
 
 ```bash
-cd zadanie-3-task-queue
-npm test          # 10 testów, node --test
-npm run examples  # wszystkie trzy przykłady po kolei
+npm test          # 10 testów
+npm run examples  # trzy przykłady po kolei
 ```
-
-Wymagany Node 18+ (`queueMicrotask`, prywatne pola klas, `node:test`).
 
 ## API
 
-| Metoda | Opis |
-| --- | --- |
-| `new TaskQueue({ logger })` | `logger` (domyślnie `console`) musi mieć metodę `error()` — wstrzykiwany, żeby testy mogły asertować logowanie. |
-| `add(fn, priority = 0, label = null)` | Rejestruje zadanie. Zwraca Promise z wynikiem **tego** zadania. |
-| `run(concurrency = 3)` | Uruchamia przetwarzanie. Zwraca Promise z raportem wszystkich zadań przebiegu. |
-| `getStats()` | `{ pending, running, completed, failed }` — kopia, nie referencja. |
+```js
+const queue = new TaskQueue();              // opcjonalnie: new TaskQueue({ logger })
 
-`run()` zwraca tablicę rekordów w kolejności **zakończenia**:
+queue.add(fn, priority, label);             // zwraca Promise z wynikiem tego zadania
+const results = await queue.run(3);         // limit równoległości
+queue.getStats();                           // { pending, running, completed, failed }
+```
+
+`run()` zwraca tablicę wyników w kolejności zakończenia zadań:
 
 ```js
-{ status: 'fulfilled', label: 'notes', priority: 10, value: {...} }
+{ status: 'fulfilled', label: 'notes',   priority: 10, value: {...} }
 { status: 'rejected',  label: 'reports', priority: 10, reason: Error }
 ```
 
-## Decyzje projektowe
+## Kilka rzeczy, które warto wiedzieć o implementacji
 
-**Priorytety przez sortowane wstawianie.** `add()` wstawia zadanie binary searchem
-(O(log n) porównań) w miejsce wynikające z priorytetu, więc pobranie kolejnego zadania
-to `shift()`. Alternatywą byłoby sortowanie przy każdym pobraniu — droższe i niepotrzebne.
+**Priorytety.** `add()` wstawia zadanie na właściwą pozycję binary searchem, więc pobranie
+kolejnego to zwykły `shift()`. Warunek `>=` przy porównaniu priorytetów sprawia, że nowe
+zadanie ląduje za już obecnymi o tym samym priorytecie - bez tego kolejność w obrębie
+priorytetu byłaby odwrócona.
 
-**FIFO przy równym priorytecie.** Szukamy pierwszej pozycji o priorytecie *niższym*
-(warunek `>=`), dzięki czemu nowe zadanie ląduje za już obecnymi o tym samym priorytecie.
-Bez tego kolejność w obrębie priorytetu byłaby odwrócona (LIFO) — jest na to test.
+**Kolejka nie startuje zadania od razu w `add()`**, tylko planuje to na najbliższy
+microtask. Dzięki temu partia zadań dodana w jednym bloku synchronicznym jest planowana
+razem i priorytet działa też dla zadań dorzuconych chwilę później. Widać to w przykładzie 3:
+zadanie serwisowe z priorytetem 99 wyprzedza pobieranie stron.
 
-**Planowanie na microtasku.** `#pump()` nie jest wołany synchronicznie z `add()`, tylko
-przez `queueMicrotask` (z deduplikacją). Powód: partia zadań dodana w jednym bloku
-synchronicznym ma być zaplanowana **naraz**. Gdyby kolejka startowała zadanie natychmiast
-po `add()`, pierwsze dodane zadanie wystartowałoby niezależnie od tego, że milisekundę
-później dorzucono zadanie o priorytecie 99. Przykład 3 pokazuje to na scenariuszu
-„zadanie serwisowe wyprzedza pobieranie stron”.
+**Błędy.** Każde zadanie leci przez `Promise.resolve().then(fn)`, więc wyjątek
+synchroniczny trafia w tę samą gałąź co odrzucony Promise. Błąd zwiększa `failed`, jest
+logowany i wraca w raporcie `run()`, a kolejka obsadza slot następnym zadaniem.
 
-**Błąd nie przerywa kolejki.** Każde zadanie jest wykonywane przez
-`Promise.resolve().then(fn)`, więc wyjątek synchroniczny trafia w tę samą gałęź co
-odrzucony Promise. Błąd zwiększa `failed`, jest logowany i wraca w raporcie `run()`,
-a `#pump()` (wołany z `finally`) obsadza slot następnym zadaniem.
+**Uchwyt z `add()` jest opcjonalny** - odrzuca się przy błędzie, ale kolejka dopina do
+niego wewnętrzny `.catch()`. Bez tego samo zignorowanie uchwytu wywalałoby proces na
+`unhandledRejection`, mimo że błąd został już obsłużony.
 
-**Uchwyt z `add()` jest opcjonalny.** Zwracany Promise odrzuca się przy błędzie zadania,
-ale kolejka wewnętrznie dopina do niego `.catch(() => {})`. Bez tego samo zignorowanie
-uchwytu powodowałoby `unhandledRejection` i w Node ≥15 ubijało proces — mimo że błąd
-został już poprawnie obsłużony i zaraportowany.
+**Zadania dodane w trakcie `run()`** trafiają do wolnych slotów bez restartu kolejki.
+`run()` kończy się, gdy kolejka jest pusta i nic nie jest w toku, więc zadanie może
+bezpiecznie zaplanować kolejne. Powtórne `run()` w trakcie pracy zwraca ten sam uchwyt,
+żeby nie zwielokrotnić puli wykonawców.
 
-**Zadania dodane w trakcie `run()`** trafiają do wolnych slotów bez restartu kolejki
-(`add()` planuje `#pump()`, gdy przebieg jest aktywny). `run()` kończy się dopiero, gdy
-kolejka jest pusta **i** nic nie jest w toku — dlatego zadanie może bezpiecznie
-zaplanować kolejne.
+## Czego nie ma
 
-**Powtórne `run()`** w trakcie działania zwraca ten sam uchwyt, zamiast zwielokrotniać
-pulę wykonawców. Dzięki temu wywołanie z dwóch miejsc nie łamie limitu równoległości.
-
-## Testy
-
-```
-✔ wykonuje zadania w kolejności priorytetów, a przy remisie FIFO
-✔ nie przekracza limitu równoległości
-✔ błąd zadania nie przerywa kolejki i jest logowany
-✔ przechwytuje również wyjątek synchroniczny
-✔ getStats() odzwierciedla cykl życia i zwraca kopię
-✔ uchwyt z add() zwraca wynik zadania i odrzuca się przy błędzie
-✔ zadania dodane w trakcie run() są dociągane do wolnych slotów
-✔ run() na pustej kolejce kończy się natychmiast
-✔ powtórne run() w trakcie działania zwraca ten sam przebieg
-✔ waliduje argumenty
-```
-
-## Czego świadomie nie ma
-
-- **Timeoutów i ponowień** — nie ma ich w wymaganiach, a każde z nich to osobna decyzja
-  projektowa (czy ponawiać przy błędzie walidacji? ile razy?). Miejsce na nie jest
-  w `#execute()`.
-- **Anulowania zadań** — wymagałoby `AbortController` przekazywanego do `fn`, czyli
-  zmiany kontraktu funkcji zadania.
-- **Priorytetowej kolejki na kopcu** — przy realnych rozmiarach kolejki (setki zadań)
-  `splice()` w tablicy jest szybszy niż kopiec, bo operuje na ciągłej pamięci.
+Timeoutów, ponawiania i anulowania zadań - nie ma ich w wymaganiach, a każde wymaga
+osobnej decyzji (ile prób? czy ponawiać błąd walidacji? `AbortController` w kontrakcie
+`fn`?). Miejsce na timeout i retry jest w `#execute()`.

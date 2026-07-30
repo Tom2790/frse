@@ -12,10 +12,8 @@
         </div>
 
         <div class="card-body">
-            <!-- Pasek narzędzi: filtrowanie + dodawanie -->
             <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                <!-- `flex: 1 1 18rem` — pole filtra rośnie, ale zostawia miejsce
-                     przyciskowi obok; zawija się dopiero na wąskich ekranach. -->
+                <!-- Pole filtra rosnie, ale zostawia miejsce przyciskowi obok. -->
                 <div class="input-group" style="flex: 1 1 18rem; max-width: 34rem">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
                     <input
@@ -40,7 +38,7 @@
                 </button>
             </div>
 
-            <!-- Błąd komunikacji z API (inny niż 422 z formularza) -->
+            <!-- Blad komunikacji z API, inny niz 422 z formularza -->
             <div v-if="error" class="alert alert-danger d-flex justify-content-between align-items-center">
                 <span>{{ error }}</span>
                 <button class="btn btn-sm btn-outline-danger" type="button" @click="getNewList()">
@@ -48,7 +46,6 @@
                 </button>
             </div>
 
-            <!-- Formularz tworzenia / edycji -->
             <NoteForm
                 v-if="showForm"
                 :note="editNote"
@@ -57,7 +54,7 @@
                 @cancel="closeForm"
             />
 
-            <!-- Skeleton loader na pierwszym ładowaniu -->
+            <!-- Skeleton tylko przy pierwszym ladowaniu -->
             <div v-if="isLoading" class="table-responsive" aria-busy="true">
                 <table class="table align-middle mb-0">
                     <thead>
@@ -80,7 +77,7 @@
                 <span class="visually-hidden">Ładowanie notatek…</span>
             </div>
 
-            <!-- Stan pusty: rozróżniamy „brak notatek” od „filtr nic nie znalazł” -->
+            <!-- Rozrozniamy "brak notatek" od "filtr nic nie znalazl" -->
             <div v-else-if="filteredList.length === 0" class="text-center text-body-secondary py-5">
                 <i class="bi bi-journal-text fs-1 d-block mb-2"></i>
 
@@ -99,7 +96,6 @@
                 </template>
             </div>
 
-            <!-- Lista notatek -->
             <div v-else class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead>
@@ -161,7 +157,7 @@
             </div>
         </div>
 
-        <!-- Paginacja serwerowa: API zwraca 15 notatek na stronę -->
+        <!-- Paginacja serwerowa, API zwraca 15 notatek na strone -->
         <div
             v-if="!isLoading && lastPage > 1"
             class="card-footer d-flex justify-content-between align-items-center"
@@ -194,7 +190,7 @@ import axios from 'axios';
 
 import NoteForm from './NoteForm.vue';
 
-/** Co ile milisekund lista odświeża się sama (wymóg: 3 minuty). */
+// Wymog zadania: odswiezanie co 3 minuty.
 const POLL_INTERVAL_MS = 3 * 60 * 1000;
 
 export default {
@@ -204,8 +200,8 @@ export default {
 
     data() {
         return {
-            isLoading: false,      // pierwsze ładowanie → skeleton
-            isRefreshing: false,   // odświeżanie w tle → dyskretny spinner
+            isLoading: false,      // pierwsze ladowanie, pokazuje skeleton
+            isRefreshing: false,   // odswiezanie w tle, tylko dyskretny spinner
             note_list: [],
             search: '',
             showForm: false,
@@ -222,10 +218,9 @@ export default {
 
     computed: {
         /**
-         * Filtrowanie po tytule bez dodatkowego zapytania do API — działa na już
-         * pobranej stronie wyników. Przy większych zbiorach filtr powinien trafić
-         * do zapytania (parametr `?search=`), ale specyfikacja wymaga tutaj
-         * właśnie computed property.
+         * Filtrowanie bez dodatkowego zapytania, czyli na juz pobranej stronie wynikow.
+         * Przy wiekszych zbiorach filtr powinien pojsc do zapytania (?search=), ale
+         * zadanie wymaga tutaj computed property.
          */
         filteredList() {
             const needle = this.search.trim().toLowerCase();
@@ -242,20 +237,17 @@ export default {
         this.isLoading = true;
         this.getNewList();
 
-        // Automatyczne odświeżanie listy co 3 minuty.
         this.pollTimer = setInterval(() => this.getNewList({ silent: true }), POLL_INTERVAL_MS);
     },
 
     beforeUnmount() {
-        // Bez tego interwał żyłby dalej po zniszczeniu komponentu i strzelał do API.
+        // Bez tego interwal zylby dalej po zniszczeniu komponentu i strzelal do API.
         clearInterval(this.pollTimer);
     },
 
     methods: {
         /**
-         * Pobiera aktualną stronę listy.
-         *
-         * @param {{silent?: boolean}} options `silent` = odświeżanie w tle (bez skeletonu)
+         * @param {{silent?: boolean}} options silent = odswiezanie w tle, bez skeletonu
          */
         getNewList({ silent = false } = {}) {
             if (silent) {
@@ -271,8 +263,8 @@ export default {
                     this.lastPage = data.meta.last_page;
                     this.error = '';
 
-                    // Usunięcie ostatniej notatki na stronie mogło zostawić nas
-                    // za końcem listy — cofamy się na istniejącą stronę.
+                    // Usuniecie ostatniej notatki na stronie moglo nas zostawic
+                    // za koncem listy, wiec cofamy sie na istniejaca strone.
                     if (this.page > this.lastPage) {
                         this.page = this.lastPage;
 
@@ -295,9 +287,9 @@ export default {
         },
 
         /**
-         * Optymistyczne przypięcie/odpięcie: UI zmienia się natychmiast, a gdy żądanie
-         * padnie — wracamy do stanu poprzedniego i pokazujemy komunikat. Użytkownik nie
-         * czeka na round-trip przy operacji, która niemal zawsze się udaje.
+         * Optymistycznie: UI zmienia sie od razu, a gdy zadanie padnie, wracamy do
+         * poprzedniego stanu. Uzytkownik nie czeka na round-trip przy operacji,
+         * ktora prawie zawsze sie udaje.
          */
         togglePin(item) {
             const previous = item.is_pinned;
@@ -308,11 +300,10 @@ export default {
             axios
                 .patch(`/api/notes/${item.id}`, { is_pinned: item.is_pinned })
                 .then(({ data }) => {
-                    // Serwer jest źródłem prawdy — przyjmujemy jego wersję.
+                    // Serwer jest zrodlem prawdy.
                     item.is_pinned = data.data.is_pinned;
                 })
                 .catch((error) => {
-                    // Rollback.
                     item.is_pinned = previous;
                     this.countPinned += previous ? 1 : -1;
                     this.error = this.messageFrom(error, 'Nie udało się zmienić przypięcia notatki.');
@@ -337,9 +328,7 @@ export default {
                 });
         },
 
-        /**
-         * @param {Object|null} note Notatka do edycji albo `null` dla nowej.
-         */
+        /** @param {Object|null} note Notatka do edycji albo null dla nowej. */
         openForm(note) {
             this.editNote = note;
             this.showForm = true;
@@ -373,7 +362,7 @@ export default {
             });
         },
 
-        /** Wyciąga komunikat z odpowiedzi Laravela, z rozsądnym fallbackiem. */
+        /** Komunikat z odpowiedzi Laravela albo fallback. */
         messageFrom(error, fallback) {
             return error.response?.data?.message ?? fallback;
         },

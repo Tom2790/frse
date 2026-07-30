@@ -13,11 +13,8 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * Polityka dostępu do notatek (Zadanie 1).
- *
- * Testujemy ją bezpośrednio i przez `Gate`, bo w normalnym przepływie HTTP cudza
- * notatka jest odsiewana już przez repozytorium (404) i polityka nie zdąży odmówić.
- * To druga warstwa zabezpieczenia — musi być sprawdzona osobno.
+ * Testujemy bezposrednio i przez Gate, bo w normalnym przeplywie HTTP cudza notatka
+ * jest odsiewana juz przez repozytorium (404) i polityka nie zdazy odmowic.
  */
 class NotePolicyTest extends TestCase
 {
@@ -61,7 +58,7 @@ class NotePolicyTest extends TestCase
         $intruder = User::factory()->create();
         $note = Note::factory()->for($owner)->create();
 
-        // Dowód, że atrybut #[UsePolicy] na modelu faktycznie działa.
+        // Sprawdza tez, ze atrybut #[UsePolicy] na modelu faktycznie dziala.
         $this->assertTrue(Gate::forUser($owner)->allows('update', $note));
         $this->assertFalse(Gate::forUser($intruder)->allows('update', $note));
         $this->assertTrue(Gate::forUser($intruder)->allows('viewAny', Note::class));

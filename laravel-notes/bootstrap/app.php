@@ -16,9 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Sanctum w trybie SPA: żądania z własnego frontendu (widget Vue w Bladzie)
-        // uwierzytelniają się ciasteczkiem sesji, nie tokenem w nagłówku.
-        // Bez tego axios z `withCredentials` dostawałby 401 na /api/notes.
+        // Sanctum w trybie SPA: zadania z naszego frontendu uwierzytelniaja sie
+        // ciasteczkiem sesji, nie tokenem. Bez tego axios z withCredentials dostaje 401.
         $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -26,12 +25,11 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
 
-        // Brak zasobu (także „cudza notatka”) → 404 z neutralnym komunikatem.
-        // Domyślny komunikat Laravela zdradzałby nazwę klasy modelu i ID.
+        // 404 z neutralnym komunikatem, bo domyslny zdradza nazwe klasy modelu i ID.
         //
-        // Callback rejestrujemy na `NotFoundHttpException`, a nie `ModelNotFoundException`:
-        // handler Laravela najpierw mapuje wyjątek (`prepareException()`), a dopiero potem
-        // sprawdza własne callbacki — do tego momentu ModelNotFoundException już nie istnieje.
+        // Callback musi byc na NotFoundHttpException, nie na ModelNotFoundException:
+        // handler Laravela najpierw mapuje wyjatek w prepareException(), a wlasne
+        // callbacki sprawdza pozniej - wtedy ModelNotFoundException juz nie istnieje.
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 return response()->json(['message' => 'Nie znaleziono zasobu.'], 404);

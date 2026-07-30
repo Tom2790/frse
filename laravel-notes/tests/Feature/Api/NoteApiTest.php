@@ -13,8 +13,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * Testy API notatek (Zadanie 1) — pełny cykl życia zasobu, izolacja danych,
- * walidacja i paginacja.
+ * API notatek: pelny cykl zycia zasobu, izolacja danych, walidacja, paginacja.
  */
 class NoteApiTest extends TestCase
 {
@@ -62,7 +61,7 @@ class NoteApiTest extends TestCase
 
         $response->assertCreated();
 
-        // Właściciela ustala serwis na podstawie sesji/tokenu, nie ciało żądania.
+        // Wlasciciela ustala serwis na podstawie tokenu, a nie cialo zadania.
         $this->assertDatabaseHas('notes', [
             'id' => $response->json('data.id'),
             'user_id' => $user->id,
@@ -203,7 +202,7 @@ class NoteApiTest extends TestCase
         $foreign = Note::factory()->for(User::factory()->create())->create();
         Sanctum::actingAs($user);
 
-        // 404, nie 403 — nie potwierdzamy istnienia cudzych zasobów.
+        // 404, nie 403 - nie potwierdzamy istnienia cudzych zasobow.
         $this->getJson("/api/notes/{$foreign->id}")
             ->assertNotFound()
             ->assertJsonPath('message', 'Nie znaleziono zasobu.');
@@ -268,7 +267,7 @@ class NoteApiTest extends TestCase
         $note = Note::factory()->unpinned()->for($user)->create(['title' => 'Bez zmian']);
         Sanctum::actingAs($user);
 
-        // Tak działa optymistyczny toggle w komponencie NoteManager.vue.
+        // Tak dziala optymistyczny toggle w NoteManager.vue.
         $this->patchJson("/api/notes/{$note->id}", ['is_pinned' => true])
             ->assertOk()
             ->assertJsonPath('data.is_pinned', true)

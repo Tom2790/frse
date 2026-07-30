@@ -12,11 +12,8 @@ use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 use Illuminate\Support\Collection;
 
 /**
- * Atrapa repozytorium trzymająca notatki w pamięci.
- *
- * Jej istnienie jest najlepszym dowodem, że warstwa z Zadania 2 ma sens:
- * `NoteService` da się przetestować bez bazy danych, migracji i Eloquenta —
- * bo zna wyłącznie interfejs `NoteRepositoryInterface`.
+ * Atrapa repozytorium trzymajaca notatki w pamieci. Dzieki niej NoteService da sie
+ * przetestowac bez bazy, migracji i Eloquenta - zna tylko interfejs.
  */
 final class InMemoryNoteRepository implements NoteRepositoryInterface
 {
@@ -25,7 +22,7 @@ final class InMemoryNoteRepository implements NoteRepositoryInterface
 
     private int $nextId = 1;
 
-    /** Liczniki wywołań — pozwalają sprawdzić, że serwis nie robi zbędnej pracy. */
+    /** Licznik wywolan, zeby sprawdzic, czy serwis nie robi zbednej pracy. */
     public int $createCalls = 0;
 
     /**
@@ -104,9 +101,7 @@ final class InMemoryNoteRepository implements NoteRepositoryInterface
         return $this->ownedBy($user)->filter(fn (Note $note): bool => $note->is_pinned)->count();
     }
 
-    /**
-     * Wypełnia atrapę N notatkami danego użytkownika (przygotowanie testu limitu).
-     */
+    /** Wypelnia atrape N notatkami danego uzytkownika. */
     public function seed(User $user, int $count): void
     {
         for ($i = 0; $i < $count; $i++) {

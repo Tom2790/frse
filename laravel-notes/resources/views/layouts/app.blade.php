@@ -5,15 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Notatki')</title>
 
-    {{-- Vite wstrzykuje zbudowane (lub serwowane na żywo) CSS i JS. --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-body-tertiary">
 
-{{--
-    Cały interaktywny obszar strony jest w #app, bo tam montuje się Vue.
-    Navbar musi być w środku — dzwonek powiadomień to komponent Vue.
---}}
+{{-- Navbar jest w #app, bo dzwonek powiadomien to komponent Vue. --}}
 <div id="app">
     <nav class="navbar navbar-expand bg-body border-bottom mb-4">
         <div class="container">
@@ -23,7 +19,6 @@
 
             @auth
                 <div class="ms-auto d-flex align-items-center gap-3">
-                    {{-- Zadanie 5a --}}
                     <notification-bell></notification-bell>
 
                     <span class="text-body-secondary small d-none d-sm-inline">

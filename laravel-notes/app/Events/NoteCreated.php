@@ -9,14 +9,11 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Zdarzenie domenowe: powstała nowa notatka.
+ * Publikowane przez NoteService::create(). Serwis nie wie, co bedzie dalej - dzis mail,
+ * kiedys moze webhook albo log audytowy. Dodanie odbiorcy nie wymaga zmiany serwisu.
  *
- * Publikuje je `NoteService::create()`. Serwis nie wie, co się dalej stanie —
- * dziś to e-mail i powiadomienie w aplikacji, jutro może dojść webhook albo
- * wpis w logu audytowym. Dodanie kolejnego odbiorcy nie wymaga zmiany serwisu.
- *
- * `SerializesModels` sprawia, że do kolejki trafia tylko klucz modelu, a listener
- * odświeża go z bazy — nie wozimy nieaktualnej migawki obiektu przez kolejkę.
+ * SerializesModels sprawia, ze do kolejki idzie klucz modelu, a listener odswieza go
+ * z bazy. Nie wozimy nieaktualnej migawki obiektu przez kolejke.
  */
 class NoteCreated
 {

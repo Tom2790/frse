@@ -10,9 +10,6 @@ use Illuminate\Support\Facades\Gate;
 
 class StoreNoteRequest extends FormRequest
 {
-    /**
-     * Autoryzacja tworzenia zasobu — polityka `NotePolicy::create()`.
-     */
     public function authorize(): bool
     {
         return Gate::allows('create', Note::class);
@@ -31,8 +28,6 @@ class StoreNoteRequest extends FormRequest
     }
 
     /**
-     * Czytelne komunikaty błędów zamiast domyślnych, generycznych.
-     *
      * @return array<string, string>
      */
     public function messages(): array
@@ -48,8 +43,6 @@ class StoreNoteRequest extends FormRequest
     }
 
     /**
-     * Dane po walidacji, gotowe do przekazania do serwisu.
-     *
      * @return array{title: string, content: string, is_pinned?: bool}
      */
     public function toServicePayload(): array

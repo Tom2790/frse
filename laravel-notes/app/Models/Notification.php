@@ -13,16 +13,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Powiadomienie w aplikacji (Zadanie 5a).
- *
- * @property int                              $id
- * @property int                              $user_id
- * @property string                           $type
- * @property string                           $title
- * @property string                           $body
- * @property \Illuminate\Support\Carbon|null  $read_at
- * @property \Illuminate\Support\Carbon|null  $created_at
- * @property-read User                        $user
+ * @property int $id
+ * @property int $user_id
+ * @property string $type
+ * @property string $title
+ * @property string $body
+ * @property \Illuminate\Support\Carbon|null $read_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property-read User $user
  */
 #[Fillable(['type', 'title', 'body', 'read_at'])]
 class Notification extends Model
@@ -30,7 +28,7 @@ class Notification extends Model
     /** @use HasFactory<NotificationFactory> */
     use HasFactory;
 
-    /** Tabela ma tylko `created_at` — wyłączamy zapis `updated_at`. */
+    // Tabela ma tylko created_at.
     public const UPDATED_AT = null;
 
     protected function casts(): array

@@ -1,8 +1,6 @@
-# Zadanie 2 — Repository + Service Layer
+# Zadanie 2 - Repository + Service Layer
 
-## Kod przed refaktoryzacją
-
-Fragment z treści zadania:
+## Kod z treści zadania
 
 ```php
 public function store(Request $request)
@@ -13,32 +11,31 @@ public function store(Request $request)
         'content'   => $request->content,
         'is_pinned' => false,
     ]);
-
     return response()->json($note, 201);
 }
 ```
 
-Co jest z tym nie tak:
+Co tu nie działa:
 
 1. **Brak walidacji.** `$request->title` może być `null`, tablicą albo tekstem na 10 MB.
-   Puste `title` przechodzi do bazy i wywala się dopiero na `NOT NULL`, dając 500 zamiast 422.
-2. **Kontroler zna Eloquenta.** Zmiana źródła danych albo dopisanie cache'u wymaga
-   ruszania kontrolera. Nie da się przetestować tej logiki bez bazy.
-3. **Nie ma miejsca na reguły biznesowe.** Limit notatek, wartości domyślne, zdarzenia
-   domenowe — wszystko musiałoby wylądować w kontrolerze i powtórzyć się w każdym miejscu,
-   które tworzy notatki (API, komenda artisan, import).
-4. **Model wycieka do odpowiedzi.** `response()->json($note)` serializuje cały model,
-   razem z `user_id` i tym, co ktoś kiedyś doda do tabeli. Kontrakt API zmienia się
-   wtedy przy okazji migracji.
-5. **`auth()->id()` w środku ciała żądania.** Zależność od globalnego stanu, przez którą
-   metody nie da się wywołać z kolejki ani z CLI.
-6. **`is_pinned` zahardkodowane na `false`.** Klient nie może utworzyć notatki od razu
-   przypiętej.
+   Puste `title` przechodzi dalej i wywala się na `NOT NULL` w bazie, czyli klient dostaje
+   500 zamiast 422.
+2. **Kontroler zna Eloquenta.** Zmiana źródła danych albo dopisanie cache'u wymaga ruszania
+   kontrolera, a tej logiki nie da się przetestować bez bazy.
+3. **Nie ma gdzie wsadzić reguł biznesowych.** Limit notatek, wartości domyślne, zdarzenia -
+   wszystko wylądowałoby w kontrolerze i powtórzyło się w każdym miejscu tworzącym notatki
+   (API, komenda artisan, import).
+4. **Model wycieka do odpowiedzi.** `response()->json($note)` serializuje cały model razem
+   z `user_id` i tym, co ktoś kiedyś dopisze do tabeli. Kontrakt API zmienia się wtedy
+   przy okazji migracji.
+5. **`auth()->id()` w środku metody** to zależność od globalnego stanu. Tego kodu nie da się
+   wywołać z kolejki ani z CLI.
+6. **`is_pinned` na sztywno `false`** - nie da się od razu utworzyć notatki przypiętej.
 
-## Kod po refaktoryzacji
+## Po refaktoryzacji
 
 ```php
-// app/Http/Controllers/Api/NoteController.php
+// NoteController
 public function store(StoreNoteRequest $request): JsonResponse
 {
     $note = $this->notes->create(
@@ -54,7 +51,7 @@ public function store(StoreNoteRequest $request): JsonResponse
 ```
 
 ```php
-// app/Services/NoteService.php
+// NoteService
 public function create(array $data, User $user): Note
 {
     if ($this->notes->countForUser($user) >= self::MAX_NOTES_PER_USER) {
@@ -74,7 +71,7 @@ public function create(array $data, User $user): Note
 ```
 
 ```php
-// app/Repositories/EloquentNoteRepository.php
+// EloquentNoteRepository
 public function create(array $data, User $user): Note
 {
     $note = Note::make($data);
@@ -85,63 +82,60 @@ public function create(array $data, User $user): Note
 }
 ```
 
-## Podział odpowiedzialności
+## Kto za co odpowiada
 
-| Warstwa | Odpowiada za | Czego NIE wie |
+| Warstwa | Odpowiada za | Czego nie wie |
 | --- | --- | --- |
-| `StoreNoteRequest` | poprawność danych wejściowych, komunikaty błędów (422) | co się z danymi dalej stanie |
-| `NoteController` | HTTP: kody odpowiedzi, nagłówki, autoryzacja politykami | jak notatki są przechowywane |
-| `NoteService` | reguły biznesowe: limit 100 notatek, wartości domyślne, zdarzenia | SQL, Eloquent, HTTP |
-| `EloquentNoteRepository` | zapytania, izolacja po właścicielu | reguł biznesowych |
-| `NoteResource` | kształt odpowiedzi JSON | źródła danych |
+| `StoreNoteRequest` | poprawność wejścia, komunikaty 422 | co się z danymi stanie dalej |
+| `NoteController` | kody HTTP, nagłówki, autoryzacja politykami | jak notatki są przechowywane |
+| `NoteService` | limit 100 notatek, wartości domyślne, zdarzenia | SQL, Eloquent, HTTP |
+| `EloquentNoteRepository` | zapytania, zawężenie do właściciela | reguł biznesowych |
+| `NoteResource` | kształt JSON-a | źródła danych |
 
-## Wiązanie w kontenerze
+## Binding
 
 ```php
-// app/Providers/AppServiceProvider.php
+// AppServiceProvider
 public array $bindings = [
     NoteRepositoryInterface::class => EloquentNoteRepository::class,
 ];
 
 public function register(): void
 {
-    // Równoważna forma jawna (wymagana treścią zadania):
+    // Ta sama rzecz zapisana jawnie, tak jak wymaga treść zadania.
     $this->app->bind(NoteRepositoryInterface::class, EloquentNoteRepository::class);
 }
 ```
 
-Wystarczy jedna z tych form — właściwość `$bindings` jest tańsza, bo kontener czyta ją
-bez uruchamiania metody. W repo są obie, żeby pokazać oba warianty; w realnym projekcie
-zostałaby jedna.
+Wystarczy jedna z tych form - właściwość `$bindings` jest tańsza, bo kontener czyta ją bez
+uruchamiania metody. W repo są obie, bo zadanie wprost prosi o `$this->app->bind()`.
+W realnym projekcie zostałaby jedna.
 
-## Dlaczego każda metoda repozytorium przyjmuje `User`
+## Dlaczego każda metoda repozytorium bierze `User`
 
 ```php
 public function find(int $id, User $user): ?Note;
 ```
 
-Właściciel jest częścią kontraktu, nie opcjonalnym filtrem. Nie istnieje metoda, która
-zwróciłaby notatki wszystkich użytkowników — więc izolacji danych **nie da się
-zapomnieć** na poziomie wywołania. To mocniejsza gwarancja niż „pamiętaj dodać
-`where('user_id', ...)`”.
+Właściciel jest częścią kontraktu, a nie opcjonalnym filtrem. Nie ma tu metody, która
+zwróciłaby notatki wszystkich, więc o izolacji danych nie da się zapomnieć w miejscu
+wywołania. To mocniejsza gwarancja niż „pamiętaj dodać `where('user_id', ...)`".
 
-Efekt: żądanie o cudzą notatkę kończy się `404`, a nie `403`. Świadomie — nie
-potwierdzamy istnienia zasobów, których użytkownik nie powinien widzieć. `NotePolicy`
-działa jako druga warstwa, na już wczytanym modelu, i ma własne testy
-(`tests/Unit/NotePolicyTest.php`).
+Skutek: żądanie o cudzą notatkę kończy się kodem 404, nie 403. Tak ma być - nie
+potwierdzamy istnienia zasobów, których użytkownik nie powinien widzieć.
 
 ## Co ta warstwa faktycznie daje
 
-`tests/Unit/NoteServiceTest.php` uruchamia serwis z atrapą
-`InMemoryNoteRepository` — bez bazy, migracji i Eloquenta. Reguła „limit 100 notatek”
-jest przetestowana w izolacji, wraz z asercją, że po przekroczeniu limitu repozytorium
-**nie jest w ogóle wołane** o zapis i nie leci zdarzenie `NoteCreated`. Tego nie da się
-sprawdzić na kodzie z pierwszej sekcji tego dokumentu.
+`tests/Unit/NoteServiceTest.php` uruchamia serwis z atrapą `InMemoryNoteRepository`, więc
+bez bazy, migracji i Eloquenta. Limit 100 notatek jest przetestowany w izolacji, razem
+z asercją, że po jego przekroczeniu repozytorium nie jest w ogóle wołane o zapis i nie
+leci zdarzenie `NoteCreated`. Na kodzie z pierwszej sekcji tego pliku nie da się tego
+sprawdzić.
 
 ## Znane ograniczenie
 
-Sprawdzenie limitu (`countForUser`) i zapis to dwie osobne operacje, więc dwa równoległe
-żądania mogą teoretycznie przepchnąć notatkę nr 101. Przy limicie „miękkim” to
-akceptowalne. Gdyby limit był twardy, właściwym rozwiązaniem jest transakcja
-z `lockForUpdate()` na wierszu użytkownika albo ograniczenie po stronie bazy — i jedno
-i drugie zmieściłoby się w `NoteService::create()`, bez ruszania kontrolera.
+Sprawdzenie limitu i zapis to dwie osobne operacje, więc dwa równoległe żądania mogą
+teoretycznie przepchnąć notatkę numer 101. Przy limicie miękkim jest to akceptowalne.
+Gdyby miał być twardy, właściwym rozwiązaniem jest transakcja z `lockForUpdate()` na
+wierszu użytkownika albo ograniczenie po stronie bazy - jedno i drugie zmieściłoby się
+w `NoteService::create()`, bez ruszania kontrolera.

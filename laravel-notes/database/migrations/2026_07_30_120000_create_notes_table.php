@@ -18,8 +18,8 @@ return new class extends Migration
             $table->boolean('is_pinned')->default(false);
             $table->timestamps();
 
-            // Lista notatek jest zawsze filtrowana po właścicielu i sortowana
-            // „przypięte najpierw, potem najnowsze” — indeks pokrywa ten dostęp.
+            // Lista jest zawsze filtrowana po wlascicielu i sortowana "przypiete
+            // najpierw, potem najnowsze". Indeks pokrywa dokladnie ten dostep.
             $table->index(['user_id', 'is_pinned', 'created_at']);
         });
     }

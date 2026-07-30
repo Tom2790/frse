@@ -13,12 +13,10 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
- * Logowanie sesyjne dla widoku Blade z widgetem Vue (Zadanie 4).
+ * Logowanie sesyjne dla widoku Blade z widgetem.
  *
- * Sanctum obsługuje dwa tryby: token osobisty (API, patrz `Api\AuthController`)
- * i sesję cookie dla własnego frontendu. Widget w Bladzie stoi na tym samym
- * origin co API, więc korzysta z sesji — dzięki temu nie trzymamy tokenu
- * w localStorage, a ciasteczko `HttpOnly` jest niedostępne dla JS.
+ * Widget stoi na tym samym origin co API, wiec uzywa sesji, a nie tokenu. Dzieki temu
+ * nic nie lezy w localStorage, a ciasteczko HttpOnly jest niedostepne dla JS.
  */
 class SessionController extends Controller
 {
@@ -40,7 +38,7 @@ class SessionController extends Controller
             ]);
         }
 
-        // Nowy identyfikator sesji po zalogowaniu — zabezpieczenie przed session fixation.
+        // Nowe ID sesji po zalogowaniu, zabezpieczenie przed session fixation.
         $request->session()->regenerate();
 
         return redirect()->intended(route('notes.index'));

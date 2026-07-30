@@ -1,57 +1,42 @@
 /**
- * TaskQueue — kolejka zadań asynchronicznych z priorytetami i limitem równoległości.
- *
- * Założenia:
- *  - `add(fn, priority)` rejestruje zadanie i zwraca uchwyt (Promise) do jego wyniku.
- *  - Wyższy `priority` = wcześniejsze wykonanie. Przy równym priorytecie obowiązuje FIFO
- *    (kolejność dodania), dzięki czemu kolejka jest stabilna i przewidywalna.
- *  - `run(concurrency)` uruchamia przetwarzanie i kończy się, gdy kolejka jest pusta
- *    i żadne zadanie nie jest już w toku.
- *  - Błąd pojedynczego zadania NIE przerywa kolejki: jest liczony w statystykach,
- *    logowany i raportowany w wyniku `run()`.
- *  - Zadania dodane w trakcie działania (np. z wnętrza innego zadania) są dociągane
- *    do wolnych slotów bez restartu kolejki.
+ * Kolejka zadan asynchronicznych z priorytetami i limitem rownoleglosci.
  *
  * @typedef {Object} TaskResult
  * @property {'fulfilled'|'rejected'} status
- * @property {string} label      Etykieta zadania (własna lub auto: `task#1`).
- * @property {number} priority   Priorytet, z jakim zadanie zostało wykonane.
- * @property {*}      [value]    Wynik — tylko dla `fulfilled`.
- * @property {*}      [reason]   Błąd — tylko dla `rejected`.
+ * @property {string} label
+ * @property {number} priority
+ * @property {*} [value]   tylko dla fulfilled
+ * @property {*} [reason]  tylko dla rejected
  */
 class TaskQueue {
-    /** @type {Array<Object>} Kolejka posortowana malejąco po priorytecie. */
     #queue = [];
 
     #stats = { pending: 0, running: 0, completed: 0, failed: 0 };
 
-    /** Licznik wstawień — tie-breaker gwarantujący FIFO w obrębie priorytetu. */
+    // Numer wstawienia. Sluzy tylko do etykiety zadania.
     #sequence = 0;
 
-    /** Logger wstrzykiwany przez konstruktor (ułatwia testowanie). */
     #logger;
 
     #concurrency = 1;
 
-    /** @type {Promise<TaskResult[]>|null} Uchwyt aktywnego przebiegu `run()`. */
+    // Uchwyt aktywnego run(). null = kolejka nie pracuje.
     #runPromise = null;
 
-    /** @type {((results: TaskResult[]) => void)|null} */
     #resolveRun = null;
 
-    /** @type {TaskResult[]} Wyniki bieżącego przebiegu. */
     #results = [];
 
-    /** Zabezpieczenie przed wielokrotnym zaplanowaniem tego samego przebiegu `#pump()`. */
     #pumpScheduled = false;
 
     /**
-     * @param {Object}  [options]
-     * @param {Object}  [options.logger=console] Obiekt z metodą `error(...)`.
+     * @param {Object} [options]
+     * @param {Object} [options.logger=console] Obiekt z metoda error(). Wstrzykiwany, zeby testy
+     *                                         mogly sprawdzic logowanie bez brudzenia konsoli.
      */
     constructor({ logger = console } = {}) {
         if (typeof logger?.error !== 'function') {
-            throw new TypeError('TaskQueue: logger musi udostępniać metodę error().');
+            throw new TypeError('TaskQueue: logger musi mieć metodę error().');
         }
 
         this.#logger = logger;
@@ -60,27 +45,24 @@ class TaskQueue {
     /**
      * Dodaje zadanie do kolejki.
      *
-     * @param {() => Promise<*>|*} fn        Funkcja zwracająca Promise (dozwolona też synchroniczna).
-     * @param {number}             [priority=0] Wyższa wartość = wyższy priorytet.
-     * @param {string}             [label]   Opcjonalna etykieta widoczna w logach i wynikach.
-     * @returns {Promise<*>} Uchwyt wyniku tego konkretnego zadania.
-     *                       Odrzucenie tego uchwytu nie wywołuje `unhandledRejection`,
-     *                       gdy wywołujący go zignoruje — kolejka sama go „odbiera”.
+     * @param {() => Promise<*>|*} fn Funkcja zwracajaca Promise. Synchroniczna tez przejdzie.
+     * @param {number} [priority=0] Wyzsza wartosc = wczesniejsze wykonanie.
+     * @param {string} [label] Etykieta do logow i wynikow.
+     * @returns {Promise<*>} Wynik tego jednego zadania.
      */
     add(fn, priority = 0, label = null) {
         if (typeof fn !== 'function') {
-            throw new TypeError('TaskQueue.add(): fn musi być funkcją zwracającą Promise.');
+            throw new TypeError('TaskQueue.add(): fn musi być funkcją.');
         }
 
         if (!Number.isFinite(priority)) {
-            throw new TypeError('TaskQueue.add(): priority musi być liczbą skończoną.');
+            throw new TypeError('TaskQueue.add(): priority musi być liczbą.');
         }
 
         const sequence = this.#sequence++;
         const task = {
             fn,
             priority,
-            sequence,
             label: label ?? `task#${sequence + 1}`,
             resolve: null,
             reject: null,
@@ -94,30 +76,27 @@ class TaskQueue {
         this.#insert(task);
         this.#stats.pending++;
 
-        // Kolejka już pracuje — zaplanuj obsadzenie wolnych slotów.
         if (this.#runPromise !== null) {
             this.#schedule();
         }
 
-        // Uchwyt jest opcjonalny: gdy nikt go nie obsłuży, błąd i tak jest raportowany
-        // przez logger i `run()`, więc tłumimy `unhandledRejection`.
+        // Uchwyt jest opcjonalny. Bez tego catch zignorowanie go dawaloby
+        // unhandledRejection, mimo ze blad jest juz zalogowany i w raporcie run().
         handle.catch(() => {});
 
         return handle;
     }
 
     /**
-     * Uruchamia przetwarzanie kolejki z limitem równoległości.
+     * Uruchamia kolejke. Wywolanie w trakcie pracy zwraca ten sam uchwyt,
+     * zeby nie zwielokrotnic puli wykonawcow.
      *
-     * Powtórne wywołanie w trakcie działania zwraca ten sam uchwyt (bez zwielokrotniania
-     * puli wykonawców), więc `run()` jest bezpieczne do wywołania z kilku miejsc.
-     *
-     * @param {number} [concurrency=3] Maksymalna liczba zadań wykonywanych jednocześnie.
-     * @returns {Promise<TaskResult[]>} Wyniki wszystkich zadań przebiegu — w kolejności zakończenia.
+     * @param {number} [concurrency=3]
+     * @returns {Promise<TaskResult[]>} Wyniki w kolejnosci zakonczenia zadan.
      */
     async run(concurrency = 3) {
         if (!Number.isInteger(concurrency) || concurrency < 1) {
-            throw new RangeError('TaskQueue.run(): concurrency musi być liczbą całkowitą >= 1.');
+            throw new RangeError('TaskQueue.run(): concurrency musi być całkowite i >= 1.');
         }
 
         if (this.#runPromise !== null) {
@@ -127,8 +106,7 @@ class TaskQueue {
         this.#concurrency = concurrency;
         this.#results = [];
 
-        // Uchwyt trzymamy też lokalnie: `#pump()` zeruje pole po domknięciu przebiegu,
-        // a metoda musi zwrócić Promise także wtedy, gdy kolejka była pusta.
+        // Uchwyt trzymamy tez lokalnie, bo #pump() zeruje pole po domknieciu przebiegu.
         const runPromise = new Promise((resolve) => {
             this.#resolveRun = resolve;
         });
@@ -139,19 +117,15 @@ class TaskQueue {
         return runPromise;
     }
 
-    /**
-     * @returns {{pending: number, running: number, completed: number, failed: number}}
-     *          Kopia licznikowa — modyfikacja zwróconego obiektu nie wpływa na kolejkę.
-     */
+    /** @returns {{pending: number, running: number, completed: number, failed: number}} Kopia. */
     getStats() {
         return { ...this.#stats };
     }
 
     /**
-     * Wstawia zadanie w miejsce wynikające z priorytetu (binary search, O(log n) porównań).
-     * Porządek: priorytet malejąco. Szukamy pierwszej pozycji o priorytecie *niższym*
-     * (warunek `>=`), więc nowe zadanie ląduje ZA już obecnymi o tym samym priorytecie —
-     * to gwarantuje FIFO w obrębie priorytetu bez porównywania `sequence`.
+     * Wstawia zadanie na wlasciwa pozycje (binary search).
+     * Porzadek: priorytet malejaco. Warunek >= zamiast > sprawia, ze nowe zadanie
+     * laduje ZA rownymi priorytetami, czyli w obrebie priorytetu mamy FIFO.
      */
     #insert(task) {
         let low = 0;
@@ -159,9 +133,8 @@ class TaskQueue {
 
         while (low < high) {
             const middle = (low + high) >>> 1;
-            const goesAfter = this.#queue[middle].priority >= task.priority;
 
-            if (goesAfter) {
+            if (this.#queue[middle].priority >= task.priority) {
                 low = middle + 1;
             } else {
                 high = middle;
@@ -172,12 +145,11 @@ class TaskQueue {
     }
 
     /**
-     * Planuje `#pump()` na najbliższy microtask (z deduplikacją).
+     * Planuje #pump() na najblizszy microtask, raz na tick.
      *
-     * Dzięki temu partia zadań dodana w jednym bloku synchronicznym jest planowana
-     * naraz — kolejka najpierw zbiera całą partię, a potem wybiera z niej zadania
-     * o najwyższym priorytecie. Uruchamianie w `add()` „na gorąco” startowałoby
-     * pierwsze dodane zadanie niezależnie od tego, co przyjdzie milisekundę później.
+     * Dzieki temu partia zadan dodana w jednym bloku synchronicznym jest planowana razem.
+     * Gdyby add() startowal zadanie od razu, pierwsze dodane wystartowaloby niezaleznie
+     * od tego, ze chwile pozniej doszlo zadanie o wyzszym priorytecie.
      */
     #schedule() {
         if (this.#pumpScheduled) {
@@ -192,10 +164,7 @@ class TaskQueue {
         });
     }
 
-    /**
-     * Obsadza wolne sloty zadaniami z kolejki, a gdy nie ma już nic do zrobienia —
-     * domyka aktywny `run()`. Jedyne miejsce, w którym kolejka decyduje „co dalej”.
-     */
+    /** Obsadza wolne sloty, a gdy nie ma juz nic do zrobienia - domyka run(). */
     #pump() {
         while (this.#stats.running < this.#concurrency && this.#queue.length > 0) {
             this.#execute(this.#queue.shift());
@@ -216,8 +185,8 @@ class TaskQueue {
     }
 
     /**
-     * Wykonuje jedno zadanie i aktualizuje statystyki. `Promise.resolve().then(fn)`
-     * zapewnia, że synchroniczny wyjątek w `fn` też trafi do gałęzi błędu.
+     * Wykonuje jedno zadanie. Promise.resolve().then(fn) zamiast fn() bezposrednio,
+     * zeby wyjatek synchroniczny trafil w te sama galez co odrzucony Promise.
      */
     #execute(task) {
         this.#stats.pending--;

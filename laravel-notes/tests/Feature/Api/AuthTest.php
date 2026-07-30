@@ -10,9 +10,7 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Rejestracja i logowanie przez Sanctum (Zadanie 1).
- */
+/** Rejestracja i logowanie na tokenach Sanctuma. */
 class AuthTest extends TestCase
 {
     use RefreshDatabase;
@@ -21,8 +19,8 @@ class AuthTest extends TestCase
     {
         parent::setUp();
 
-        // Limit 6 żądań na minutę jest celowy w produkcji, ale w jednym teście
-        // uderzamy w ten sam endpoint kilka razy z tego samego „IP”.
+        // Limit 6 zadan na minute jest celowy, ale w jednym tescie uderzamy w ten
+        // sam endpoint kilka razy z tego samego IP.
         $this->withoutMiddleware(ThrottleRequests::class);
     }
 
@@ -43,7 +41,7 @@ class AuthTest extends TestCase
         $this->assertDatabaseHas('users', ['email' => 'anna@example.com']);
         $this->assertNotEmpty($response->json('token'));
 
-        // Hasło nigdy nie wraca w odpowiedzi.
+        // Haslo nigdy nie wraca w odpowiedzi.
         $this->assertArrayNotHasKey('password', $response->json('user'));
     }
 
@@ -124,7 +122,7 @@ class AuthTest extends TestCase
         $wrongPassword->assertStatus(422)
             ->assertJsonPath('errors.email.0', 'Nieprawidłowy e-mail lub hasło.');
 
-        // Identyczna odpowiedź w obu przypadkach — brak enumeracji kont.
+        // Identyczna odpowiedz w obu przypadkach, wiec nie da sie zgadywac kont.
         $noAccount->assertStatus(422)
             ->assertJsonPath('errors.email.0', 'Nieprawidłowy e-mail lub hasło.');
     }
@@ -146,9 +144,9 @@ class AuthTest extends TestCase
 
         $this->assertDatabaseCount('personal_access_tokens', 0);
 
-        // W testach aplikacja żyje między żądaniami, więc guard Sanctuma trzyma
-        // użytkownika rozwiązanego przy poprzednim żądaniu. W realnym HTTP każde
-        // żądanie startuje od zera — tutaj musimy to wymusić ręcznie.
+        // W testach aplikacja zyje miedzy zadaniami, wiec guard trzyma uzytkownika
+        // rozwiazanego przy poprzednim zadaniu. W realnym HTTP kazde zadanie startuje
+        // od zera, tutaj trzeba to wymusic recznie.
         $this->app['auth']->forgetGuards();
 
         $this->withToken($token)->getJson('/api/notes')->assertUnauthorized();

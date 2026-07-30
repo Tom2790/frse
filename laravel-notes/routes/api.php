@@ -7,13 +7,8 @@ use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Trasy publiczne — uwierzytelnianie (Zadanie 1)
-|--------------------------------------------------------------------------
-| Limit żądań chroni logowanie przed zgadywaniem haseł (6 prób na minutę).
-| Rejestracja ma ten sam limit, żeby nie dało się masowo zakładać kont.
-*/
+// Publiczne. Throttle 6/min chroni logowanie przed zgadywaniem hasel, a rejestracje
+// przed masowym zakladaniem kont.
 Route::post('/register', [AuthController::class, 'register'])
     ->middleware('throttle:6,1')
     ->name('api.register');
@@ -22,22 +17,17 @@ Route::post('/login', [AuthController::class, 'login'])
     ->middleware('throttle:6,1')
     ->name('api.login');
 
-/*
-|--------------------------------------------------------------------------
-| Trasy chronione (Sanctum: token osobisty ALBO sesja SPA)
-|--------------------------------------------------------------------------
-*/
+// Chronione. Sanctum przyjmuje tu token osobisty albo sesje SPA.
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
     Route::get('/user', [AuthController::class, 'me'])->name('api.user');
 
-    // Zadanie 1: pełny CRUD. `apiResource` daje GET, POST, GET/{id}, PUT|PATCH/{id}, DELETE/{id}.
+    // apiResource daje GET, POST, GET/{id}, PUT|PATCH/{id}, DELETE/{id}.
     Route::apiResource('notes', NoteController::class)
         ->names('api.notes')
         ->whereNumber('note');
 
-    // Zadanie 5a: powiadomienia dla komponentu dzwonka.
-    // `read-all` MUSI być przed trasą z parametrem — inaczej „read-all” zostałoby
+    // read-all musi byc przed trasa z parametrem, inaczej "read-all" zostanie
     // dopasowane jako {notification}.
     Route::patch('/notifications/read-all', [NotificationController::class, 'readAll'])
         ->name('api.notifications.read-all');

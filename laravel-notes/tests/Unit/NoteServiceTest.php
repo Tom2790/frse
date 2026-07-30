@@ -16,11 +16,8 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * Testy warstwy serwisowej (Zadanie 2) — bez bazy danych.
- *
- * Serwis dostaje atrapę repozytorium, więc sprawdzamy wyłącznie reguły biznesowe,
- * a nie SQL. To jest praktyczna korzyść z wzorca Repository: logika biznesowa
- * jest testowalna w izolacji.
+ * Serwis dostaje atrape repozytorium, wiec testujemy reguly biznesowe bez bazy i SQL-a.
+ * To praktyczna korzysc z wzorca Repository.
  */
 class NoteServiceTest extends TestCase
 {
@@ -39,7 +36,7 @@ class NoteServiceTest extends TestCase
         $this->repository = new InMemoryNoteRepository();
         $this->service = new NoteService($this->repository);
 
-        // Model bez zapisu do bazy — wystarczy nam identyfikator.
+        // Model bez zapisu do bazy, wystarczy nam identyfikator.
         $this->user = User::factory()->makeOne();
         $this->user->id = 1;
     }
@@ -90,7 +87,7 @@ class NoteServiceTest extends TestCase
             $this->assertSame(422, $exception->render()->getStatusCode());
         }
 
-        // Przy przekroczonym limicie repozytorium nie jest w ogóle wołane o zapis.
+        // Przy przekroczonym limicie repozytorium nie jest w ogole wolane o zapis.
         $this->assertSame(0, $this->repository->createCalls);
         Event::assertNotDispatched(NoteCreated::class);
     }

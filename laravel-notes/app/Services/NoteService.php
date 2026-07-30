@@ -13,21 +13,16 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 /**
- * Warstwa serwisowa notatek — jedyne miejsce z regułami biznesowymi.
- *
- * Kontrolery mówią „co” (utwórz notatkę dla tego użytkownika), serwis decyduje
- * „na jakich zasadach” (limit, wartości domyślne, zdarzenia domenowe), a repozytorium
- * odpowiada za „gdzie i jak” to zapisać. Serwis nie zna HTTP, a repozytorium — reguł.
+ * Reguly biznesowe notatek. Serwis nie zna HTTP, repozytorium nie zna regul.
  */
 final class NoteService
 {
-    /** Reguła biznesowa: ile notatek może mieć jeden użytkownik. */
+    /** Ile notatek moze miec jeden uzytkownik. */
     public const int MAX_NOTES_PER_USER = 100;
 
-    /** Domyślny rozmiar strony wymagany w specyfikacji. */
     public const int DEFAULT_PER_PAGE = 15;
 
-    /** Górna granica `per_page` — chroni bazę przed żądaniem 100 000 rekordów. */
+    /** Gorna granica per_page, zeby klient nie poprosil o 100 000 rekordow naraz. */
     public const int MAX_PER_PAGE = 50;
 
     public function __construct(
@@ -35,8 +30,6 @@ final class NoteService
     ) {}
 
     /**
-     * Stronicowana lista notatek użytkownika.
-     *
      * @return LengthAwarePaginator<int, Note>
      */
     public function paginate(User $user, ?int $perPage = null): LengthAwarePaginator
@@ -46,28 +39,21 @@ final class NoteService
         return $this->notes->all($user, $perPage);
     }
 
-    /**
-     * Globalna liczba notatek użytkownika (licznik dla UI).
-     */
     public function count(User $user): int
     {
         return $this->notes->countForUser($user);
     }
 
-    /**
-     * Globalna liczba przypiętych notatek użytkownika (licznik dla UI).
-     */
     public function countPinned(User $user): int
     {
         return $this->notes->countPinnedForUser($user);
     }
 
     /**
-     * Pojedyncza notatka użytkownika.
+     * Cudza notatka konczy sie tu tak samo jak nieistniejaca, czyli 404.
+     * Nie potwierdzamy istnienia zasobow, ktorych uzytkownik nie powinien widziec.
      *
-     * @throws ModelNotFoundException Gdy notatka nie istnieje albo należy do kogoś innego.
-     *                               Świadomie 404, nie 403 — nie potwierdzamy istnienia
-     *                               cudzych zasobów.
+     * @throws ModelNotFoundException
      */
     public function findOrFail(int $id, User $user): Note
     {
@@ -81,11 +67,9 @@ final class NoteService
     }
 
     /**
-     * Tworzy notatkę i publikuje zdarzenie `NoteCreated` (patrz Zadanie 5b).
-     *
      * @param  array{title: string, content: string, is_pinned?: bool}  $data
      *
-     * @throws NoteLimitExceededException Gdy użytkownik wyczerpał limit notatek.
+     * @throws NoteLimitExceededException
      */
     public function create(array $data, User $user): Note
     {
@@ -105,8 +89,7 @@ final class NoteService
     }
 
     /**
-     * Aktualizuje notatkę użytkownika. Obsługuje też aktualizację częściową
-     * (np. samo przełączenie `is_pinned` z widgetu Vue).
+     * Obsluguje tez aktualizacje czesciowa, np. samo przelaczenie is_pinned z widgetu.
      *
      * @param  array<string, mixed>  $data
      *
@@ -135,9 +118,7 @@ final class NoteService
         }
     }
 
-    /**
-     * Ile notatek użytkownik może jeszcze dodać (przydatne w UI i testach).
-     */
+    /** Ile notatek uzytkownik moze jeszcze dodac. */
     public function remainingQuota(User $user): int
     {
         return max(self::MAX_NOTES_PER_USER - $this->notes->countForUser($user), 0);

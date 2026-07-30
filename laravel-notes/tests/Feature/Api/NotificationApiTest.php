@@ -12,9 +12,7 @@ use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * API powiadomień dla komponentu dzwonka (Zadanie 5a).
- */
+/** API powiadomien dla komponentu dzwonka. */
 class NotificationApiTest extends TestCase
 {
     use RefreshDatabase;
@@ -47,7 +45,7 @@ class NotificationApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonCount(NotificationService::FEED_LIMIT, 'data')
-            // Licznik nieprzeczytanych jest globalny, nie ograniczony do 20.
+            // Licznik nieprzeczytanych jest globalny, nie ograniczony do 20 pozycji.
             ->assertJsonPath('meta.unread_count', 25);
 
         $newest = Notification::query()->where('user_id', $user->id)

@@ -13,11 +13,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
- * @property int    $id
+ * @property int $id
  * @property string $name
  * @property string $email
  * @property string $password
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Note>         $notes
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Note> $notes
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Notification> $notifications
  */
 #[Fillable(['name', 'email', 'password'])]
@@ -27,13 +27,12 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory;
 
-    // Tokeny osobiste Sanctuma: createToken(), currentAccessToken().
+    // createToken(), currentAccessToken()
     use HasApiTokens;
 
-    // Świadomie BEZ traitu `Notifiable`: nie korzystamy z systemu notyfikacji Laravela,
-    // a jego relacja `notifications()` (morphMany do własnej tabeli Laravela) kolidowałaby
-    // z naszą tabelą powiadomień z Zadania 5a. E-maile wysyłamy przez `Mail::to($user)`,
-    // co tego traitu nie wymaga.
+    // Bez traitu Notifiable: nie uzywamy systemu notyfikacji Laravela, a jego relacja
+    // notifications() gryzlaby sie z nasza wlasna tabela powiadomien (zadanie 5a).
+    // Mail::to($user) dziala bez tego traitu.
 
     /**
      * @return array<string, string>
@@ -55,8 +54,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Powiadomienia w aplikacji (Zadanie 5a) — najnowsze pierwsze.
-     *
      * @return HasMany<Notification, $this>
      */
     public function notifications(): HasMany

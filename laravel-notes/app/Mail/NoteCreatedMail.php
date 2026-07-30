@@ -12,15 +12,12 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
 
-/**
- * E-mail informujący o dodaniu nowej notatki.
- */
 class NoteCreatedMail extends Mailable
 {
     use Queueable;
     use SerializesModels;
 
-    /** Ile znaków treści notatki pokazujemy w e-mailu. */
+    /** Ile znakow tresci notatki pokazujemy w mailu. */
     private const int EXCERPT_LENGTH = 200;
 
     public function __construct(

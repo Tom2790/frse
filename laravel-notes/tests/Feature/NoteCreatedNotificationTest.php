@@ -18,9 +18,7 @@ use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * E-mail po utworzeniu notatki: Event → kolejkowany Listener → Mailable (Zadanie 5b).
- */
+/** Mail po utworzeniu notatki: zdarzenie, kolejkowany listener, Mailable. */
 class NoteCreatedNotificationTest extends TestCase
 {
     use RefreshDatabase;
@@ -49,8 +47,8 @@ class NoteCreatedNotificationTest extends TestCase
     {
         Event::fake([NoteCreated::class]);
 
-        // Auto-discovery listenerów Laravela (skan katalogu app/Listeners) — sprawdzamy,
-        // że powiązanie faktycznie istnieje, a nie że „powinno”.
+        // Laravel sam skanuje app/Listeners. Sprawdzamy, ze powiazanie faktycznie
+        // istnieje, a nie ze powinno.
         Event::assertListening(NoteCreated::class, SendNoteCreatedEmail::class);
     }
 
@@ -66,7 +64,7 @@ class NoteCreatedNotificationTest extends TestCase
             'content' => 'Treść notatki.',
         ])->assertCreated();
 
-        // Kolejkowany listener trafia do kolejki jako CallQueuedListener.
+        // Kolejkowany listener trafia do kolejki zapakowany w CallQueuedListener.
         Queue::assertPushed(
             \Illuminate\Events\CallQueuedListener::class,
             fn (\Illuminate\Events\CallQueuedListener $job): bool => $job->class === SendNoteCreatedEmail::class,
@@ -107,7 +105,7 @@ class NoteCreatedNotificationTest extends TestCase
         $mailable->assertSeeInHtml('Anna Testowa');
         $mailable->assertSeeInHtml('Bardzo ważna notatka');
 
-        // Treść w e-mailu jest ucięta do 200 znaków (+ znak wielokropka).
+        // Tresc jest ucieta do 200 znakow plus wielokropek.
         $rendered = $mailable->render();
         $this->assertStringNotContainsString($note->content, $rendered);
         $this->assertStringContainsString('...', $rendered);
@@ -116,8 +114,8 @@ class NoteCreatedNotificationTest extends TestCase
     #[Test]
     public function pelna_sciezka_z_kolejka_synchroniczna_konczy_sie_wyslanym_mailem(): void
     {
-        // Testy działają na QUEUE_CONNECTION=sync, więc bez Queue::fake() listener
-        // wykonuje się od razu — to sprawdza cały łańcuch end-to-end.
+        // Testy chodza na QUEUE_CONNECTION=sync, wiec bez Queue::fake() listener
+        // wykonuje sie od razu i sprawdzamy caly lancuch.
         Mail::fake();
 
         $user = User::factory()->create(['email' => 'anna@example.com']);

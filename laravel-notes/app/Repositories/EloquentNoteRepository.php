@@ -10,10 +10,8 @@ use App\Repositories\Contracts\NoteRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
- * Implementacja repozytorium na Eloquencie.
- *
- * To jedyne miejsce w aplikacji, które wie, że notatki trzymamy w bazie i że
- * robimy to Eloquentem. Serwis i kontrolery operują wyłącznie na interfejsie.
+ * Jedyne miejsce, ktore wie, ze notatki siedza w bazie i ze uzywamy Eloquenta.
+ * Serwis i kontrolery znaja tylko interfejs.
  */
 final class EloquentNoteRepository implements NoteRepositoryInterface
 {

@@ -9,8 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * Reprezentacja jednej notatki w API.
- *
  * @mixin Note
  */
 class NoteResource extends JsonResource
@@ -31,9 +29,8 @@ class NoteResource extends JsonResource
     }
 
     /**
-     * Podmienia domyślną `AnonymousResourceCollection` na naszą klasę kolekcji.
-     * Dzięki temu `NoteResource::collection($notes)` i `new NoteResourceCollection($notes)`
-     * dają dokładnie ten sam kształt odpowiedzi — nie ma dwóch formatów listy notatek.
+     * Podmiana domyslnej AnonymousResourceCollection na nasza klase, zeby
+     * NoteResource::collection() i new NoteResourceCollection() dawaly to samo JSON-owo.
      *
      * @param  mixed  $resource
      */
