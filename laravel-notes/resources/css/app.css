@@ -1,0 +1,73 @@
+/*
+ * Bootstrap 5 + Bootstrap Icons (wymagane przez Zadanie 4 i 5a: karta, skeleton loader,
+ * ikony bi-bell). Importujemy skompilowany CSS z paczek npm, żeby nie ciągnąć
+ * łańcucha kompilacji Sass tam, gdzie nie zmieniamy zmiennych Bootstrapa.
+ */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
+/* ------------------------------------------------------------------ skeleton */
+
+/*
+ * Placeholder ładowania. Bootstrap ma klasę `placeholder-glow`, ale własna animacja
+ * daje płynniejszy efekt „przesuwającego się światła” i nie wymaga JS.
+ */
+.skeleton-line {
+    height: 0.85rem;
+    border-radius: 0.25rem;
+    background: linear-gradient(90deg, #e9ecef 25%, #f8f9fa 37%, #e9ecef 63%);
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0 50%;
+    }
+}
+
+/* Szanujemy ustawienie „ogranicz animacje” w systemie użytkownika. */
+@media (prefers-reduced-motion: reduce) {
+    .skeleton-line {
+        animation: none;
+    }
+}
+
+/* ------------------------------------------------- panel powiadomień (5a) */
+
+.notification-panel {
+    position: absolute;
+    top: 2.5rem;
+    right: 0;
+    width: 22rem;
+    max-width: calc(100vw - 2rem);
+    z-index: 1050;
+}
+
+.notification-item {
+    cursor: pointer;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.notification-item:last-child {
+    border-bottom: 0;
+}
+
+.notification-item:hover {
+    background-color: var(--bs-tertiary-bg);
+}
+
+/* Nieprzeczytane wyróżniamy tłem ORAZ paskiem — nie samym kolorem,
+   żeby informacja była czytelna także przy zaburzeniach widzenia barw. */
+.notification-item--unread {
+    background-color: var(--bs-primary-bg-subtle);
+    border-left: 3px solid var(--bs-primary);
+}
+
+.notification-list {
+    max-height: 24rem;
+    overflow-y: auto;
+}

@@ -16,7 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Sanctum w trybie SPA: żądania z własnego frontendu (widget Vue w Bladzie)
+        // uwierzytelniają się ciasteczkiem sesji, nie tokenem w nagłówku.
+        // Bez tego axios z `withCredentials` dostawałby 401 na /api/notes.
+        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
