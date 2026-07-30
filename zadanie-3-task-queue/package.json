@@ -1,0 +1,19 @@
+{
+    "name": "zadanie-3-task-queue",
+    "version": "1.0.0",
+    "description": "Zadanie 3 - modul kolejki asynchronicznej z priorytetami (czysty JS, ES2020+)",
+    "type": "module",
+    "main": "src/TaskQueue.js",
+    "scripts": {
+        "test": "node --test test/",
+        "example:1": "node examples/01-priorytety.js",
+        "example:2": "node examples/02-obsluga-bledow.js",
+        "example:3": "node examples/03-dodawanie-w-trakcie.js",
+        "examples": "npm run example:1 && npm run example:2 && npm run example:3"
+    },
+    "engines": {
+        "node": ">=18"
+    },
+    "license": "MIT",
+    "private": true
+}
