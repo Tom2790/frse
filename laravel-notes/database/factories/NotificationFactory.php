@@ -21,14 +21,18 @@ class NotificationFactory extends Factory
     public function definition(): array
     {
         $type = $this->faker->randomElement(['note.assigned', 'note.commented', 'system.info']);
+        $createdAt = $this->faker->dateTimeBetween('-7 days');
 
         return [
             'user_id' => User::factory(),
             'type' => $type,
             'title' => $this->titleFor($type),
             'body' => $this->faker->sentence(random_int(10, 20)),
-            'read_at' => $this->faker->boolean(40) ? $this->faker->dateTimeBetween('-2 days') : null,
-            'created_at' => $this->faker->dateTimeBetween('-7 days'),
+            // read_at zawsze po created_at, zeby dane nie byly sprzeczne.
+            'read_at' => $this->faker->boolean(40)
+                ? $this->faker->dateTimeBetween($createdAt)
+                : null,
+            'created_at' => $createdAt,
         ];
     }
 
@@ -39,8 +43,8 @@ class NotificationFactory extends Factory
 
     public function read(): static
     {
-        return $this->state(fn (): array => [
-            'read_at' => $this->faker->dateTimeBetween('-1 day'),
+        return $this->state(fn (array $attributes): array => [
+            'read_at' => $this->faker->dateTimeBetween($attributes['created_at']),
         ]);
     }
 

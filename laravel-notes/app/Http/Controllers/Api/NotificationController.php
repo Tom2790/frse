@@ -12,11 +12,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * API powiadomień dla komponentu `NotificationBell.vue` (Zadanie 5a).
+ * API dla komponentu NotificationBell.vue.
  *
- * Ten sam podział warstw co w notatkach: kontroler tłumaczy HTTP, serwis zna reguły
- * (limit 20 najnowszych, oznaczanie jako przeczytane), a izolację danych wymusza
- * zapytanie zawężone do właściciela.
+ * Licznik nieprzeczytanych wraca w meta.unread_count przy kazdej odpowiedzi, bo lista
+ * jest ucieta do 20 pozycji - front nie policzylby go poprawnie sam.
  */
 class NotificationController extends Controller
 {
@@ -24,9 +23,6 @@ class NotificationController extends Controller
         private readonly NotificationService $notifications,
     ) {}
 
-    /**
-     * GET /api/notifications — 20 najnowszych powiadomień + licznik nieprzeczytanych.
-     */
     public function index(Request $request): JsonResponse
     {
         $user = $this->user($request);
@@ -36,9 +32,6 @@ class NotificationController extends Controller
             ->response();
     }
 
-    /**
-     * PATCH /api/notifications/{notification}/read — oznacz jedno jako przeczytane.
-     */
     public function read(Request $request, int $notification): JsonResponse
     {
         $user = $this->user($request);
@@ -49,9 +42,6 @@ class NotificationController extends Controller
             ->response();
     }
 
-    /**
-     * PATCH /api/notifications/read-all — oznacz wszystkie jako przeczytane.
-     */
     public function readAll(Request $request): JsonResponse
     {
         $user = $this->user($request);
@@ -67,9 +57,8 @@ class NotificationController extends Controller
 
     private function user(Request $request): User
     {
+        /** @var User $user */
         $user = $request->user();
-
-        assert($user instanceof User);
 
         return $user;
     }

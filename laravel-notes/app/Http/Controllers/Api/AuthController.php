@@ -16,11 +16,10 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
 
 /**
- * Rejestracja, logowanie i wylogowanie w API (Laravel Sanctum, tokeny osobiste).
+ * Rejestracja i logowanie na tokenach Sanctuma (dla klientow API).
  *
- * Widget Vue z Zadania 4 korzysta z drugiego trybu Sanctuma — uwierzytelniania
- * sesyjnego (cookie SPA) — obsługiwanego przez trasy web. Oba tryby chronią
- * te same endpointy `/api/*` przez guard `auth:sanctum`.
+ * Widget Vue z zadania 4 uzywa drugiego trybu Sanctuma - sesji cookie - obslugiwanego
+ * przez trasy web. Oba tryby chronia te same endpointy /api/* guardem auth:sanctum.
  */
 class AuthController extends Controller
 {
@@ -40,7 +39,7 @@ class AuthController extends Controller
     }
 
     /**
-     * @throws ValidationException Gdy dane logowania są nieprawidłowe (422).
+     * @throws ValidationException
      */
     public function login(LoginRequest $request): JsonResponse
     {
@@ -48,8 +47,8 @@ class AuthController extends Controller
             ->where('email', $request->string('email')->toString())
             ->first();
 
-        // Jeden komunikat dla „nie ma konta” i „złe hasło” — nie podpowiadamy,
-        // które adresy e-mail są zarejestrowane.
+        // Ten sam komunikat dla "nie ma konta" i "zle haslo", zeby nie dalo sie
+        // sprawdzic, ktore adresy sa zarejestrowane.
         if ($user === null || ! Hash::check($request->string('password')->toString(), $user->password)) {
             throw ValidationException::withMessages([
                 'email' => 'Nieprawidłowy e-mail lub hasło.',
@@ -63,9 +62,7 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Unieważnia token użyty do tego żądania (wylogowanie z jednego urządzenia).
-     */
+    /** Uniewaznia tylko token uzyty w tym zadaniu, czyli wylogowuje jedno urzadzenie. */
     public function logout(Request $request): JsonResponse
     {
         $token = $request->user()?->currentAccessToken();
@@ -77,13 +74,10 @@ class AuthController extends Controller
         return response()->json(['message' => 'Wylogowano.']);
     }
 
-    /**
-     * GET /api/user — dane zalogowanego użytkownika (przydatne do sprawdzenia sesji).
-     */
     public function me(Request $request): JsonResponse
     {
+        /** @var User $user */
         $user = $request->user();
-        assert($user instanceof User);
 
         return response()->json(['user' => $this->userPayload($user)]);
     }

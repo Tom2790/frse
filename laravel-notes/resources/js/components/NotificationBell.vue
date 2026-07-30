@@ -1,6 +1,5 @@
 <template>
     <div class="position-relative d-inline-block">
-        <!-- Dzwonek w navbarze -->
         <button
             type="button"
             class="btn btn-link p-0 border-0 text-decoration-none"
@@ -20,7 +19,6 @@
             </span>
         </button>
 
-        <!-- Panel powiadomień -->
         <div v-if="panelOpen" class="notification-panel card shadow text-start" @click.stop>
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span class="fw-semibold">Powiadomienia</span>
@@ -43,7 +41,6 @@
             </div>
 
             <div class="card-body p-0">
-                <!-- Skeleton loader -->
                 <div v-if="isLoading" class="p-3" aria-busy="true">
                     <div v-for="row in 3" :key="`skeleton-${row}`" class="mb-3">
                         <div class="skeleton-line mb-2" style="width: 60%"></div>
@@ -52,7 +49,6 @@
                     <span class="visually-hidden">Ładowanie powiadomień…</span>
                 </div>
 
-                <!-- Błąd pobierania -->
                 <div v-else-if="error" class="p-3 text-center">
                     <p class="text-danger small mb-2">{{ error }}</p>
                     <button class="btn btn-sm btn-outline-secondary" type="button" @click="getNewList()">
@@ -60,13 +56,11 @@
                     </button>
                 </div>
 
-                <!-- Stan pusty -->
                 <div v-else-if="notifications.length === 0" class="p-4 text-center text-body-secondary">
                     <i class="bi bi-check2-circle fs-3 d-block mb-2"></i>
                     <span class="small">Brak powiadomień.</span>
                 </div>
 
-                <!-- Lista -->
                 <div v-else class="notification-list">
                     <div
                         v-for="item in notifications"
@@ -96,7 +90,6 @@
 <script>
 import axios from 'axios';
 
-/** Odpytywanie API co 60 sekund (wymóg Zadania 5a). */
 const POLL_INTERVAL_MS = 60 * 1000;
 
 export default {
@@ -108,6 +101,7 @@ export default {
             isMarkingAll: false,
             panelOpen: false,
             notifications: [],
+            unreadTotal: 0,
             error: '',
             pollTimer: null,
         };
@@ -115,11 +109,12 @@ export default {
 
     computed: {
         /**
-         * Licznik liczymy lokalnie z listy — dzięki temu optymistyczne oznaczenie
-         * powiadomienia jako przeczytane od razu zmniejsza badge, bez czekania na API.
+         * Licznik bierzemy z meta.unread_count, a nie z liczenia read_at === null w liscie.
+         * Lista ma maksymalnie 20 pozycji, wiec przy 25 nieprzeczytanych badge pokazywalby 20.
+         * Optymistyczne oznaczanie koryguje unreadTotal lokalnie, zeby badge reagowal od razu.
          */
         unreadCount() {
-            return this.notifications.filter((item) => item.read_at === null).length;
+            return this.unreadTotal;
         },
     },
 
@@ -129,8 +124,8 @@ export default {
 
         this.pollTimer = setInterval(() => this.getNewList({ silent: true }), POLL_INTERVAL_MS);
 
-        // Klik poza panelem zamyka panel. Wewnętrzne kliknięcia są zatrzymywane
-        // przez @click.stop na dzwonku i na panelu.
+        // Klik poza panelem go zamyka. Kliki w dzwonek i w panel sa zatrzymane
+        // przez @click.stop, wiec tu nie docieraja.
         document.addEventListener('click', this.closePanel);
     },
 
@@ -145,12 +140,12 @@ export default {
                 .get('/api/notifications')
                 .then(({ data }) => {
                     this.notifications = data.data;
+                    this.unreadTotal = data.meta?.unread_count ?? 0;
                     this.error = '';
                 })
                 .catch((error) => {
-                    // Cicha aktualizacja w tle nie powinna psuć widoku poprawnie
-                    // wczytanej wcześniej listy — pokazujemy błąd tylko przy
-                    // ładowaniu wywołanym przez użytkownika.
+                    // Odswiezanie w tle nie ma psuc widoku poprawnie wczytanej listy,
+                    // wiec blad pokazujemy tylko przy ladowaniu wywolanym przez uzytkownika.
                     if (!silent) {
                         this.error = error.response?.data?.message ?? 'Nie udało się pobrać powiadomień.';
                     }
@@ -163,7 +158,6 @@ export default {
         togglePanel() {
             this.panelOpen = !this.panelOpen;
 
-            // Otwarcie panelu to dobry moment na świeże dane.
             if (this.panelOpen) {
                 this.getNewList({ silent: true });
             }
@@ -173,31 +167,33 @@ export default {
             this.panelOpen = false;
         },
 
-        /**
-         * Optymistyczne oznaczenie jako przeczytane: styl i badge zmieniają się
-         * natychmiast, a przy błędzie wracamy do stanu poprzedniego.
-         */
+        /** Optymistycznie: styl i badge zmieniaja sie od razu, przy bledzie wracamy. */
         markAsRead(item) {
             if (item.read_at !== null) {
                 return;
             }
 
-            const previous = item.read_at;
             item.read_at = new Date().toISOString();
+            this.unreadTotal = Math.max(this.unreadTotal - 1, 0);
 
             axios
                 .patch(`/api/notifications/${item.id}/read`)
                 .then(({ data }) => {
                     item.read_at = data.data.read_at;
+                    this.unreadTotal = data.meta?.unread_count ?? this.unreadTotal;
                 })
                 .catch(() => {
-                    item.read_at = previous;
+                    item.read_at = null;
+                    this.unreadTotal += 1;
                     this.error = 'Nie udało się oznaczyć powiadomienia jako przeczytanego.';
                 });
         },
 
         readAll() {
-            const snapshot = this.notifications.map((item) => item.read_at);
+            // Zapamietujemy ID-ki, ktore faktycznie przelaczamy. Rollback po indeksie
+            // bylby zawodny, bo polling moze podmienic liste w trakcie zadania.
+            const flippedIds = this.notifications.filter((item) => item.read_at === null).map((item) => item.id);
+            const previousTotal = this.unreadTotal;
             const now = new Date().toISOString();
 
             this.isMarkingAll = true;
@@ -206,15 +202,18 @@ export default {
                     item.read_at = now;
                 }
             });
+            this.unreadTotal = 0;
 
             axios
                 .patch('/api/notifications/read-all')
                 .then(() => this.getNewList({ silent: true }))
                 .catch(() => {
-                    // Rollback całej listy do stanu przed operacją.
-                    this.notifications.forEach((item, index) => {
-                        item.read_at = snapshot[index];
+                    this.notifications.forEach((item) => {
+                        if (flippedIds.includes(item.id)) {
+                            item.read_at = null;
+                        }
                     });
+                    this.unreadTotal = previousTotal;
                     this.error = 'Nie udało się oznaczyć powiadomień jako przeczytanych.';
                 })
                 .finally(() => {
@@ -223,8 +222,8 @@ export default {
         },
 
         /**
-         * Czas względny bez zewnętrznej biblioteki — polskie formy liczby mnogiej
-         * są nieregularne (1 minutę / 2 minuty / 5 minut), więc dobieramy je jawnie.
+         * Bez zewnetrznej biblioteki. Polskie formy liczby mnogiej sa nieregularne
+         * (1 minute / 2 minuty / 5 minut), a Intl.RelativeTimeFormat nie zna formy 2-4.
          */
         timeAgo(dateStr) {
             if (!dateStr) {
@@ -250,10 +249,7 @@ export default {
             return `${value} ${this.pluralize(value, unit.forms)} temu`;
         },
 
-        /**
-         * Polska odmiana: 1 → forma 1., 2–4 → forma 2., pozostałe → forma 3.
-         * (z wyjątkiem 12–14, które biorą formę 3.).
-         */
+        /** 1 -> forma 1, 2-4 -> forma 2, reszta -> forma 3. Wyjatek: 12-14 biora forme 3. */
         pluralize(value, [one, few, many]) {
             if (value === 1) {
                 return one;

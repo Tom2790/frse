@@ -18,12 +18,8 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * CRUD notatek.
- *
- * Kontroler jest cienki i celowo nie zna Eloquenta: tłumaczy HTTP na wywołania
- * `NoteService`, pilnuje autoryzacji politykami i pakuje wynik w zasoby JSON.
- * Całą logikę biznesową (limit, wartości domyślne, zdarzenia) ma serwis,
- * a dostęp do danych — repozytorium.
+ * CRUD notatek. Kontroler tlumaczy HTTP na wywolania NoteService i pilnuje autoryzacji.
+ * Logika biznesowa jest w serwisie, dostep do danych w repozytorium.
  */
 class NoteController extends Controller
 {
@@ -31,9 +27,6 @@ class NoteController extends Controller
         private readonly NoteService $notes,
     ) {}
 
-    /**
-     * GET /api/notes — stronicowana lista notatek zalogowanego użytkownika.
-     */
     public function index(Request $request): NoteResourceCollection
     {
         Gate::authorize('viewAny', Note::class);
@@ -47,9 +40,6 @@ class NoteController extends Controller
         );
     }
 
-    /**
-     * POST /api/notes — nowa notatka. 201 + Location na utworzony zasób.
-     */
     public function store(StoreNoteRequest $request): JsonResponse
     {
         $note = $this->notes->create(
@@ -63,9 +53,6 @@ class NoteController extends Controller
             ->header('Location', route('api.notes.show', $note));
     }
 
-    /**
-     * GET /api/notes/{note} — pojedyncza notatka.
-     */
     public function show(Request $request, int $note): NoteResource
     {
         $model = $this->notes->findOrFail($note, $this->user($request));
@@ -75,13 +62,13 @@ class NoteController extends Controller
         return NoteResource::make($model);
     }
 
-    /**
-     * PUT|PATCH /api/notes/{note} — aktualizacja (także częściowa, np. samo `is_pinned`).
-     */
+    /** Obsluguje tez aktualizacje czesciowa, np. samo is_pinned z widgetu. */
     public function update(UpdateNoteRequest $request, int $note): NoteResource
     {
         $user = $this->user($request);
 
+        // Wczytujemy notatke, zeby polityka mogla ja ocenic. Serwis i tak sprawdza
+        // wlasciciela drugi raz - to jedno dodatkowe zapytanie za jasny podzial warstw.
         Gate::authorize('update', $this->notes->findOrFail($note, $user));
 
         return NoteResource::make(
@@ -89,9 +76,6 @@ class NoteController extends Controller
         );
     }
 
-    /**
-     * DELETE /api/notes/{note} — usunięcie. 204 bez treści.
-     */
     public function destroy(Request $request, int $note): Response
     {
         $user = $this->user($request);
@@ -104,14 +88,13 @@ class NoteController extends Controller
     }
 
     /**
-     * Uwierzytelniony użytkownik z gwarancją typu — trasy są za `auth:sanctum`,
-     * więc `null` w tym miejscu oznaczałoby błąd konfiguracji, nie sytuację runtime.
+     * Trasy stoja za auth:sanctum, wiec uzytkownik zawsze jest. Adnotacja jest dla
+     * analizy statycznej, zeby nie zgadywala, ze moze przyjsc null.
      */
     private function user(Request $request): User
     {
+        /** @var User $user */
         $user = $request->user();
-
-        assert($user instanceof User);
 
         return $user;
     }
