@@ -16,6 +16,18 @@ zadania 1 `NoteController` używa Eloquenta bezpośrednio, a zadanie 2 przenosi 
 repozytorium i serwisu. Każdy commit jest zielony na własnym stanie repo, bez kodu
 z zadań późniejszych.
 
+## Podgląd
+
+![Lista notatek](laravel-notes/docs/zrzuty/01-lista-notatek.png)
+
+Liczniki w nagłówku, przypięte na górze, filtr i paginacja.
+
+![Panel powiadomień](laravel-notes/docs/zrzuty/02-powiadomienia.png)
+![Walidacja 422](laravel-notes/docs/zrzuty/03-walidacja-422.png)
+
+Panel powiadomień z badge nieprzeczytanych i czasem względnym oraz komunikaty walidacji
+z Laravela podstawione pod pola formularza.
+
 ## Uruchomienie
 
 Potrzebne: PHP 8.4, Composer 2, Node 18+. Baza to SQLite, nie trzeba MySQL-a.
