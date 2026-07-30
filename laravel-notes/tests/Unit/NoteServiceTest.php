@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use App\Events\NoteCreated;
 use App\Exceptions\NoteLimitExceededException;
 use App\Models\User;
 use App\Repositories\Contracts\NoteRepositoryInterface;
@@ -63,6 +64,16 @@ class NoteServiceTest extends TestCase
         $this->assertSame(1, $this->repository->createCalls);
     }
 
+    #[Test]
+    public function publikuje_zdarzenie_note_created(): void
+    {
+        $note = $this->service->create(['title' => 'Tytuł', 'content' => 'Treść'], $this->user);
+
+        Event::assertDispatched(
+            NoteCreated::class,
+            fn (NoteCreated $event): bool => $event->note->id === $note->id,
+        );
+    }
 
     #[Test]
     public function pilnuje_limitu_notatek_na_uzytkownika(): void
@@ -81,6 +92,7 @@ class NoteServiceTest extends TestCase
 
         // Przy przekroczonym limicie repozytorium nie jest w ogóle wołane o zapis.
         $this->assertSame(0, $this->repository->createCalls);
+        Event::assertNotDispatched(NoteCreated::class);
     }
 
     #[Test]

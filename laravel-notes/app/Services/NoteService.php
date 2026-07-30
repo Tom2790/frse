@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Events\NoteCreated;
 use App\Exceptions\NoteLimitExceededException;
 use App\Models\Note;
 use App\Models\User;
@@ -80,7 +81,7 @@ final class NoteService
     }
 
     /**
-     * Tworzy notatkę z pilnowaniem limitu na użytkownika.
+     * Tworzy notatkę i publikuje zdarzenie `NoteCreated` (patrz Zadanie 5b).
      *
      * @param  array{title: string, content: string, is_pinned?: bool}  $data
      *
@@ -97,6 +98,8 @@ final class NoteService
             'content' => $data['content'],
             'is_pinned' => $data['is_pinned'] ?? false,
         ], $user);
+
+        event(new NoteCreated($note));
 
         return $note;
     }
