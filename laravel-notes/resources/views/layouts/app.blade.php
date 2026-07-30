@@ -12,6 +12,7 @@
 
 {{--
     Cały interaktywny obszar strony jest w #app, bo tam montuje się Vue.
+    Navbar musi być w środku — dzwonek powiadomień to komponent Vue.
 --}}
 <div id="app">
     <nav class="navbar navbar-expand bg-body border-bottom mb-4">
@@ -22,6 +23,9 @@
 
             @auth
                 <div class="ms-auto d-flex align-items-center gap-3">
+                    {{-- Zadanie 5a --}}
+                    <notification-bell></notification-bell>
+
                     <span class="text-body-secondary small d-none d-sm-inline">
                         {{ auth()->user()->name }}
                     </span>

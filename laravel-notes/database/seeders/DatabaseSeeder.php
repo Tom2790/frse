@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Models\Note;
+use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -28,6 +29,12 @@ class DatabaseSeeder extends Seeder
 
         // Konto kontrolne — jego notatki nie mogą pojawić się na liście konta demo.
         Note::factory()->count(7)->for($other)->create();
+
+        // Zadanie 5a: 5 powiadomień dla konta demo, z czego 3 nieprzeczytane.
+        Notification::factory()->count(3)->unread()->for($demo)->create();
+        Notification::factory()->count(2)->read()->for($demo)->create();
+
+        Notification::factory()->count(4)->for($other)->create();
 
         $this->command?->info('Konta demo: demo@example.com i obcy@example.com — hasło: password');
     }

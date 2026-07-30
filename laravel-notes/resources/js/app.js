@@ -2,13 +2,14 @@
  * Punkt wejścia frontendu (Zadanie 4).
  *
  * Aplikacja NIE jest SPA — Laravel nadal renderuje widoki Blade, a Vue montuje się
- * punktowo w `#app` i przejmuje tylko widget notatek.
+ * punktowo w `#app` i przejmuje tylko widget notatek oraz dzwonek powiadomień.
  * Routing, sesja i uprawnienia zostają po stronie Laravela.
  */
 import { createApp } from 'vue';
 import axios from 'axios';
 
 import NoteManager from './components/NoteManager.vue';
+import NotificationBell from './components/NotificationBell.vue';
 
 /*
  * Konfiguracja axios dla Sanctuma w trybie SPA (sesja + cookie):
@@ -40,5 +41,6 @@ axios.interceptors.response.use(
 const app = createApp({});
 
 app.component('note-manager', NoteManager);
+app.component('notification-bell', NotificationBell);
 
 app.mount('#app');
