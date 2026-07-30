@@ -50,9 +50,15 @@ npm run examples  # 3 przykłady użycia
 ## Testy
 
 ```bash
-cd laravel-notes && php artisan test
-# Tests: 55 passed (211 assertions)
+cd laravel-notes
+php artisan test    # backend, 55 testow (211 asercji)
+npm test            # front, 45 testow (Vitest + @vue/test-utils)
+
+cd ../zadanie-3-task-queue
+npm test            # 10 testow (node:test)
 ```
+
+### Backend
 
 | Plik | Co pokrywa |
 | --- | --- |
@@ -67,6 +73,18 @@ cd laravel-notes && php artisan test
 Trzy testy wymagane w zadaniu 1 to `tworzy_notatke_dla_zalogowanego_uzytkownika`,
 `zwraca_liste_wlasnych_notatek_z_paginacja_po_15` i
 `proba_dostepu_do_cudzej_notatki_konczy_sie_404`.
+
+### Front
+
+| Plik | Co pokrywa |
+| --- | --- |
+| `resources/js/components/NoteManager.test.js` | filtrowanie przez computed bez zapytania do API, optymistyczny toggle i rollback, liczniki z `meta`, skeleton, stany puste, `confirm()` przy usuwaniu, polling co 3 minuty i czyszczenie interwału |
+| `resources/js/components/NoteForm.test.js` | `watch` na propie `note`, mapowanie błędów 422 na pola, 422 bez `errors` jako komunikat ogólny, emity `saved` i `cancel` |
+| `resources/js/components/NotificationBell.test.js` | licznik z `meta.unread_count`, optymistyczne oznaczanie z rollbackiem, rollback `read-all` po ID, polska odmiana czasu względnego, polling co 60 s |
+
+Testy dzwonka są jednocześnie regresją na błąd znaleziony podczas przeglądu kodu: badge
+liczył nieprzeczytane z długości listy, a lista ma maksymalnie 20 pozycji. Po przywróceniu
+starej implementacji padają 4 testy.
 
 ## Zadanie 1 - API
 
@@ -175,8 +193,9 @@ jawnych kolumn `type`/`title`/`body`/`read_at`, a nie UUID i JSON-owego `data`. 
 - Powiadomienia nie mają repozytorium: jedna tabela i trzy zapytania, więc kolejny
   interfejs byłby warstwą bez treści. Kontroler nadal nie dotyka modeli.
 - Nie ma weryfikacji e-maila ani resetu hasła - poza zakresem zadań.
-- Front nie ma testów jednostkowych (Vitest). Logika komponentów jest pokryta pośrednio
-  przez testy API, ale to najsłabszy punkt tego rozwiązania i wiem o tym.
+- `@vue/test-utils` ciągnie `js-beautify` z podatnym `brace-expansion`, więc w
+  `package.json` jest `overrides` na wersję z łatką. Bez tego `npm audit` pokazuje
+  6 podatności high w zależnościach deweloperskich.
 
 ## Dokumentacja szczegółowa
 

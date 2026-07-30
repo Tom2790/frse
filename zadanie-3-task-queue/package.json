@@ -6,7 +6,7 @@
     "type": "module",
     "main": "src/TaskQueue.js",
     "scripts": {
-        "test": "node --test test/",
+        "test": "node --test",
         "example:1": "node examples/01-priorytety.js",
         "example:2": "node examples/02-obsluga-bledow.js",
         "example:3": "node examples/03-dodawanie-w-trakcie.js",

@@ -19,7 +19,8 @@ touch database/database.sqlite && php artisan migrate --seed
 npm install && npm run build
 php artisan serve            # http://127.0.0.1:8000
 php artisan queue:work       # drugi terminal, zadanie 5b
-php artisan test             # 55 testów
+php artisan test             # backend, 55 testów
+npm test                     # front, 45 testów
 ```
 
 Logowanie: `tomek-remlein@wp.pl` / `password`.
