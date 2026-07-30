@@ -33,9 +33,9 @@ php artisan serve          # http://127.0.0.1:8000
 php artisan queue:work     # drugi terminal, potrzebne do zadania 5b
 ```
 
-Logowanie: `demo@example.com` / `password` (pola są wstępnie wypełnione). Drugie konto
-`obcy@example.com` służy do sprawdzenia izolacji danych - po zalogowaniu widać zupełnie
-inne notatki.
+Logowanie: `tomek-remlein@wp.pl` / `password` (pola są wstępnie wypełnione). Drugie konto
+`jan.kowalski@example.com` z tym samym hasłem służy do sprawdzenia izolacji danych - po
+zalogowaniu widać zupełnie inne notatki.
 
 Jeśli uruchamiasz serwer na innym porcie niż 8000, dopisz go do `SANCTUM_STATEFUL_DOMAINS`
 w `.env`. Widget chodzi na sesyjnym trybie Sanctuma, który sprawdza domenę, więc bez tego

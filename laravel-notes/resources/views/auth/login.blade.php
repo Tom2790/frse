@@ -24,7 +24,7 @@
                                 type="email"
                                 name="email"
                                 class="form-control @error('email') is-invalid @enderror"
-                                value="{{ old('email', 'demo@example.com') }}"
+                                value="{{ old('email', 'tomek-remlein@wp.pl') }}"
                                 required
                                 autofocus
                             >
@@ -57,9 +57,10 @@
                     </form>
                 </div>
                 <div class="card-footer text-body-secondary small">
-                    Konta z seedera: <code>demo@example.com</code> oraz <code>obcy@example.com</code>,
-                    hasło <code>password</code>. Pola są wstępnie wypełnione, żeby dało się
-                    od razu sprawdzić izolację danych między kontami.
+                    Konta z seedera: <code>tomek-remlein@wp.pl</code> oraz
+                    <code>jan.kowalski@example.com</code>, hasło <code>password</code>.
+                    Pola są wstępnie wypełnione, żeby dało się od razu sprawdzić
+                    izolację danych między kontami.
                 </div>
             </div>
         </div>

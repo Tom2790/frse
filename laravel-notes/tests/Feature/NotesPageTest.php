@@ -24,27 +24,27 @@ class NotesPageTest extends TestCase
     #[Test]
     public function zalogowany_widzi_strone_z_widgetem(): void
     {
-        $this->actingAs(User::factory()->create(['name' => 'Anna Testowa']))
+        $this->actingAs(User::factory()->create(['name' => 'Tomasz Remlein']))
             ->get('/notes')
             ->assertOk()
             ->assertSee('id="app"', false)
             ->assertSee('<note-manager>', false)
             ->assertSee('<notification-bell>', false)
-            ->assertSee('Anna Testowa');
+            ->assertSee('Tomasz Remlein');
     }
 
     #[Test]
     public function logowanie_sesyjne_dziala_i_zmienia_id_sesji(): void
     {
         User::factory()->create([
-            'email' => 'anna@example.com',
+            'email' => 'tomek-remlein@wp.pl',
             'password' => 'tajnehaslo1',
         ]);
 
         $sessionIdBefore = session()->getId();
 
         $this->post('/login', [
-            'email' => 'anna@example.com',
+            'email' => 'tomek-remlein@wp.pl',
             'password' => 'tajnehaslo1',
         ])->assertRedirect(route('notes.index'));
 
@@ -56,12 +56,12 @@ class NotesPageTest extends TestCase
     public function zle_dane_logowania_wracaja_z_bledem_walidacji(): void
     {
         User::factory()->create([
-            'email' => 'anna@example.com',
+            'email' => 'tomek-remlein@wp.pl',
             'password' => 'tajnehaslo1',
         ]);
 
         $this->from('/login')
-            ->post('/login', ['email' => 'anna@example.com', 'password' => 'zle'])
+            ->post('/login', ['email' => 'tomek-remlein@wp.pl', 'password' => 'zle'])
             ->assertRedirect('/login')
             ->assertSessionHasErrors(['email' => 'Nieprawidłowy e-mail lub hasło.']);
 

@@ -78,14 +78,14 @@ class NoteCreatedNotificationTest extends TestCase
     {
         Mail::fake();
 
-        $owner = User::factory()->create(['email' => 'wlasciciel@example.com']);
+        $owner = User::factory()->create(['email' => 'tomek-remlein@wp.pl']);
         $note = Note::factory()->for($owner)->create(['title' => 'Raport miesięczny']);
 
         (new SendNoteCreatedEmail())->handle(new NoteCreated($note));
 
         Mail::assertSent(
             NoteCreatedMail::class,
-            fn (NoteCreatedMail $mail): bool => $mail->hasTo('wlasciciel@example.com')
+            fn (NoteCreatedMail $mail): bool => $mail->hasTo('tomek-remlein@wp.pl')
                 && $mail->note->is($note),
         );
     }
@@ -93,7 +93,7 @@ class NoteCreatedNotificationTest extends TestCase
     #[Test]
     public function mail_ma_poprawny_temat_i_skrocona_tresc(): void
     {
-        $owner = User::factory()->create(['name' => 'Anna Testowa']);
+        $owner = User::factory()->create(['name' => 'Tomasz Remlein']);
         $note = Note::factory()->for($owner)->create([
             'title' => 'Bardzo ważna notatka',
             'content' => str_repeat('długa treść ', 60),
@@ -102,7 +102,7 @@ class NoteCreatedNotificationTest extends TestCase
         $mailable = new NoteCreatedMail($note);
 
         $mailable->assertHasSubject('Nowa notatka: Bardzo ważna notatka');
-        $mailable->assertSeeInHtml('Anna Testowa');
+        $mailable->assertSeeInHtml('Tomasz Remlein');
         $mailable->assertSeeInHtml('Bardzo ważna notatka');
 
         // Tresc jest ucieta do 200 znakow plus wielokropek.
@@ -118,7 +118,7 @@ class NoteCreatedNotificationTest extends TestCase
         // wykonuje sie od razu i sprawdzamy caly lancuch.
         Mail::fake();
 
-        $user = User::factory()->create(['email' => 'anna@example.com']);
+        $user = User::factory()->create(['email' => 'tomek-remlein@wp.pl']);
         Sanctum::actingAs($user);
 
         $this->postJson('/api/notes', [
@@ -126,6 +126,6 @@ class NoteCreatedNotificationTest extends TestCase
             'content' => 'Treść notatki.',
         ])->assertCreated();
 
-        Mail::assertSent(NoteCreatedMail::class, fn (NoteCreatedMail $mail): bool => $mail->hasTo('anna@example.com'));
+        Mail::assertSent(NoteCreatedMail::class, fn (NoteCreatedMail $mail): bool => $mail->hasTo('tomek-remlein@wp.pl'));
     }
 }

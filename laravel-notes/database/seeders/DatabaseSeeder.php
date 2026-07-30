@@ -17,8 +17,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $demo = $this->createUser('Anna Testowa', 'demo@example.com');
-        $other = $this->createUser('Bartek Obcy', 'obcy@example.com');
+        $demo = $this->createUser('Tomasz Remlein', 'tomek-remlein@wp.pl');
+        $other = $this->createUser('Jan Kowalski', 'jan.kowalski@example.com');
 
         // 23 notatki, zeby paginacja po 15 miala druga strone.
         Note::factory()->count(3)->pinned()->for($demo)->create();
@@ -33,7 +33,7 @@ class DatabaseSeeder extends Seeder
 
         Notification::factory()->count(4)->for($other)->create();
 
-        $this->command?->info('Konta demo: demo@example.com i obcy@example.com, hasło: password');
+        $this->command?->info('Konta: tomek-remlein@wp.pl i jan.kowalski@example.com, hasło: password');
     }
 
     private function createUser(string $name, string $email): User

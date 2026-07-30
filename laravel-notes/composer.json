@@ -1,8 +1,14 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "tomaszremlein/laravel-notes",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Zadania rekrutacyjne Full Stack Developer: API notatek, warstwa serwisowa, widget Vue, powiadomienia.",
+    "authors": [
+        {
+            "name": "Tomasz Remlein",
+            "email": "tomek-remlein@wp.pl"
+        }
+    ],
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {

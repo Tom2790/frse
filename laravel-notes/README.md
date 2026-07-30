@@ -22,4 +22,4 @@ php artisan queue:work       # drugi terminal, zadanie 5b
 php artisan test             # 55 testów
 ```
 
-Logowanie: `demo@example.com` / `password`.
+Logowanie: `tomek-remlein@wp.pl` / `password`.

@@ -28,17 +28,17 @@ class AuthTest extends TestCase
     public function rejestruje_uzytkownika_i_zwraca_token(): void
     {
         $response = $this->postJson('/api/register', [
-            'name' => 'Anna Testowa',
-            'email' => 'anna@example.com',
+            'name' => 'Tomasz Remlein',
+            'email' => 'tomek-remlein@wp.pl',
             'password' => 'tajnehaslo1',
             'password_confirmation' => 'tajnehaslo1',
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('user.email', 'anna@example.com')
+            ->assertJsonPath('user.email', 'tomek-remlein@wp.pl')
             ->assertJsonStructure(['message', 'user' => ['id', 'name', 'email'], 'token']);
 
-        $this->assertDatabaseHas('users', ['email' => 'anna@example.com']);
+        $this->assertDatabaseHas('users', ['email' => 'tomek-remlein@wp.pl']);
         $this->assertNotEmpty($response->json('token'));
 
         // Haslo nigdy nie wraca w odpowiedzi.
@@ -49,8 +49,8 @@ class AuthTest extends TestCase
     public function token_z_rejestracji_daje_dostep_do_api(): void
     {
         $token = $this->postJson('/api/register', [
-            'name' => 'Anna Testowa',
-            'email' => 'anna@example.com',
+            'name' => 'Tomasz Remlein',
+            'email' => 'tomek-remlein@wp.pl',
             'password' => 'tajnehaslo1',
             'password_confirmation' => 'tajnehaslo1',
         ])->json('token');
@@ -81,12 +81,12 @@ class AuthTest extends TestCase
     public function loguje_uzytkownika_i_zwraca_token(): void
     {
         $user = User::factory()->create([
-            'email' => 'anna@example.com',
+            'email' => 'tomek-remlein@wp.pl',
             'password' => 'tajnehaslo1',
         ]);
 
         $response = $this->postJson('/api/login', [
-            'email' => 'anna@example.com',
+            'email' => 'tomek-remlein@wp.pl',
             'password' => 'tajnehaslo1',
             'device_name' => 'testy',
         ]);
@@ -105,12 +105,12 @@ class AuthTest extends TestCase
     public function nie_loguje_przy_zlym_hasle_i_nie_zdradza_czy_konto_istnieje(): void
     {
         User::factory()->create([
-            'email' => 'anna@example.com',
+            'email' => 'tomek-remlein@wp.pl',
             'password' => 'tajnehaslo1',
         ]);
 
         $wrongPassword = $this->postJson('/api/login', [
-            'email' => 'anna@example.com',
+            'email' => 'tomek-remlein@wp.pl',
             'password' => 'zlehaslo',
         ]);
 
@@ -131,12 +131,12 @@ class AuthTest extends TestCase
     public function wylogowanie_uniewaznia_uzyty_token(): void
     {
         $user = User::factory()->create([
-            'email' => 'anna@example.com',
+            'email' => 'tomek-remlein@wp.pl',
             'password' => 'tajnehaslo1',
         ]);
 
         $token = $this->postJson('/api/login', [
-            'email' => 'anna@example.com',
+            'email' => 'tomek-remlein@wp.pl',
             'password' => 'tajnehaslo1',
         ])->json('token');
 

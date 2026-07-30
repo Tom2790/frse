@@ -2,6 +2,7 @@
     "name": "zadanie-3-task-queue",
     "version": "1.0.0",
     "description": "Zadanie 3 - modul kolejki asynchronicznej z priorytetami (czysty JS, ES2020+)",
+    "author": "Tomasz Remlein <tomek-remlein@wp.pl>",
     "type": "module",
     "main": "src/TaskQueue.js",
     "scripts": {
