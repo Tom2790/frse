@@ -200,17 +200,12 @@ jawnych kolumn `type`/`title`/`body`/`read_at`, a nie UUID i JSON-owego `data`. 
   skeleton loadera i ikon `bi-bell`.
 - `Model::preventLazyLoading()` poza produkcją, żeby N+1 wywalał błąd od razu.
 - Notatki nie mają soft delete, `DELETE` usuwa trwale.
-- Limit 100 notatek nie jest transakcyjny - szczegóły w
-  [`docs/zadanie-2-refaktoryzacja.md`](laravel-notes/docs/zadanie-2-refaktoryzacja.md).
+- Limit 100 notatek nie jest transakcyjny: sprawdzenie limitu i zapis to dwie osobne
+  operacje. Przy twardym limicie właściwa byłaby transakcja z `lockForUpdate()` albo
+  ograniczenie po stronie bazy.
 - Powiadomienia nie mają repozytorium: jedna tabela i trzy zapytania, więc kolejny
   interfejs byłby warstwą bez treści. Kontroler nadal nie dotyka modeli.
 - Nie ma weryfikacji e-maila ani resetu hasła - poza zakresem zadań.
 - `@vue/test-utils` ciągnie `js-beautify` z podatnym `brace-expansion`, więc w
   `package.json` jest `overrides` na wersję z łatką. Bez tego `npm audit` pokazuje
   6 podatności high w zależnościach deweloperskich.
-
-## Dokumentacja szczegółowa
-
-- [`docs/zadanie-2-refaktoryzacja.md`](laravel-notes/docs/zadanie-2-refaktoryzacja.md) - Repository + Service Layer, kod przed i po
-- [`docs/zadanie-5b-dlaczego-shouldqueue.md`](laravel-notes/docs/zadanie-5b-dlaczego-shouldqueue.md) - dlaczego listener jest kolejkowany
-- [`zadanie-3-task-queue/README.md`](zadanie-3-task-queue/README.md) - API i decyzje w kolejce zadań

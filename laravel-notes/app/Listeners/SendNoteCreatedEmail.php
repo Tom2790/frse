@@ -20,7 +20,6 @@ use Throwable;
  * wyczerpaniu prob zadanie laduje w failed_jobs, a notatka zostaje.
  *
  * Cena: mail wychodzi z opoznieniem i wymaga dzialajacego queue:work.
- * Szerzej w docs/zadanie-5b-dlaczego-shouldqueue.md.
  */
 class SendNoteCreatedEmail implements ShouldQueue
 {
